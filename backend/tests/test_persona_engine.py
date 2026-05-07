@@ -176,7 +176,6 @@ def run_generate_with_mock() -> tuple[bool, GenerateResponse | None, str]:
             response = generate_response(
                 persona_id=_DEFAULT_PERSONA_ID,
                 question="Why should we hire you?",
-                context="Recruiter screening",
                 mode="professional",
             )
             return True, response, ""
@@ -200,8 +199,7 @@ def run_invalid_mode() -> tuple[bool, str, type]:
             {
                 "persona_id": _DEFAULT_PERSONA_ID,
                 "question": "hi",
-                "context": "",
-                "mode": "professional",
+                "mode": "raw",
             }
         )
         return False, "no error raised", type(None)
@@ -234,7 +232,6 @@ def run_generate_endpoint() -> tuple[bool, int, dict[str, Any], str]:
                     json={
                         "persona_id": _DEFAULT_PERSONA_ID,
                         "question": "Are you available next week?",
-                        "context": "recruiter",
                         "mode": "professional",
                     },
                 )
@@ -267,7 +264,7 @@ def run_rate_limit_maps_to_429() -> tuple[bool, int, str]:
             )
             mock_get_client.return_value = client
 
-            generate_response(_DEFAULT_PERSONA_ID, "hi", "", "short")
+            generate_response(_DEFAULT_PERSONA_ID, "hi", "short")
             return False, 0, "expected HTTPException, got none"
     except HTTPException as e:
         return True, e.status_code, str(e.detail)
@@ -321,7 +318,6 @@ def run_unknown_persona_404() -> tuple[bool, int, str]:
         generate_response(
             persona_id="nobody_here",
             question="hi",
-            context="",
             mode="short",
         )
         return False, 0, "expected HTTPException, got none"
@@ -488,7 +484,6 @@ def test_live_smoke() -> None:
     response = generate_response(
         persona_id=_DEFAULT_PERSONA_ID,
         question="Are you available for a call next week?",
-        context="recruiter email",
         mode="professional",
     )
 

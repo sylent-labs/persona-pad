@@ -19,7 +19,6 @@ export function ChatBox({
   loading,
 }: ChatBoxProps) {
   const [question, setQuestion] = useState("");
-  const [context, setContext] = useState("");
   const [mode, setMode] = useState<Mode>("raw");
 
   const trimmed = question.trim();
@@ -32,7 +31,6 @@ export function ChatBox({
     onSubmit({
       persona_id: personaId,
       question: trimmed,
-      context: context.trim(),
       mode,
     });
   }
@@ -67,17 +65,6 @@ export function ChatBox({
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder='e.g. "Why should we hire you?"'
-        />
-      </label>
-
-      <label className="field">
-        <span className="field-label">Context (optional)</span>
-        <textarea
-          name="context"
-          rows={2}
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          placeholder="e.g. recruiter screening for a senior backend role"
         />
       </label>
 

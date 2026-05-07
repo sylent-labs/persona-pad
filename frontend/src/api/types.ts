@@ -8,7 +8,6 @@ export interface Persona {
 export interface GenerateRequest {
   persona_id: string;
   question: string;
-  context: string;
   mode: Mode;
 }
 

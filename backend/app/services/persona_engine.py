@@ -150,7 +150,6 @@ def list_personas() -> list[Persona]:
 def _build_messages(
     persona_id: str,
     question: str,
-    context: str,
     mode: Mode,
 ) -> list[dict[str, str]]:
     """
@@ -159,7 +158,6 @@ def _build_messages(
     Parameters:
         persona_id (str): Which persona's profile and examples to load
         question (str): The user's question
-        context (str): Situational context (e.g., "recruiter email")
         mode (Mode): raw, professional, or short
     Return:
         list[dict[str, str]]: messages in OpenAI chat completions shape
@@ -184,11 +182,7 @@ def _build_messages(
         messages.append({"role": "user", "content": example.question})
         messages.append({"role": "assistant", "content": example.answer})
 
-    user_content = (
-        f"Mode: {mode}\n"
-        f"Context: {context or '(none)'}\n"
-        f"Question: {question}"
-    )
+    user_content = f"Mode: {mode}\nQuestion: {question}"
     messages.append({"role": "user", "content": user_content})
     return messages
 
@@ -196,7 +190,6 @@ def _build_messages(
 def generate_response(
     persona_id: str,
     question: str,
-    context: str,
     mode: Mode,
 ) -> GenerateResponse:
     """
@@ -205,12 +198,11 @@ def generate_response(
     Parameters:
         persona_id (str): Which persona to draft as
         question (str): The user's question
-        context (str): Situational context (e.g., "recruiter email")
         mode (Mode): raw, professional, or short
     Return:
         GenerateResponse: draft, alternate, style_notes
     """
-    messages = _build_messages(persona_id, question, context, mode)
+    messages = _build_messages(persona_id, question, mode)
     started = time.perf_counter()
 
     try:

@@ -42,7 +42,7 @@ describe("ChatBox", () => {
     expect(screen.getByRole("button", { name: /generate/i })).toBeDisabled();
   });
 
-  it("submits the persona, question, context, and selected mode", async () => {
+  it("submits the persona, question, and selected mode", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
     renderChatBox({ onSubmit });
@@ -50,10 +50,6 @@ describe("ChatBox", () => {
     await user.type(
       screen.getByRole("textbox", { name: /^question$/i }),
       "Why should we hire you?",
-    );
-    await user.type(
-      screen.getByRole("textbox", { name: /context/i }),
-      "recruiter",
     );
     await user.selectOptions(
       screen.getByRole("combobox", { name: /mode/i }),
@@ -65,7 +61,6 @@ describe("ChatBox", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       persona_id: "van_keith",
       question: "Why should we hire you?",
-      context: "recruiter",
       mode: "raw",
     });
   });

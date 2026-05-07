@@ -15,7 +15,6 @@ class GenerateRequest(BaseModel):
 
     persona_id: str = Field(min_length=1, max_length=64)
     question: str = Field(min_length=1, max_length=5000)
-    context: str = Field(default="", max_length=5000)
     mode: Mode
 
 

@@ -60,10 +60,10 @@ def personas() -> list[Persona]:
 def generate(req: GenerateRequest) -> GenerateResponse:
     """
     Method: generate
-    Objective: Draft a persona-voice reply for the given question/context/mode
+    Objective: Draft a persona-voice reply for the given question/mode
     Parameters:
-        req (GenerateRequest): persona_id, question, context, and mode
+        req (GenerateRequest): persona_id, question, and mode
     Return:
         GenerateResponse: draft, alternate, style_notes
     """
-    return generate_response(req.persona_id, req.question, req.context, req.mode)
+    return generate_response(req.persona_id, req.question, req.mode)
