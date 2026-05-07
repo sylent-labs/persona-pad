@@ -6,13 +6,13 @@ The personas in PersonaPad are private people, not public figures. Family, frien
 
 ## How it works
 
-You open the app on your phone or laptop and type a message. The frontend sends it to the backend at `/api/generate`. The backend loads the persona profile, builds a system prompt that captures how the person speaks and thinks, and forwards the request to OpenAI. The structured reply comes back and renders as a chat bubble.
+You open the app on your phone or laptop, pick a persona from the dropdown, and type a message. The frontend sends it to the backend at `/api/generate` along with the selected `persona_id`. The backend loads that persona's profile, builds a system prompt that captures how the person speaks and thinks, and forwards the request to OpenAI. The structured reply comes back and renders as a chat bubble.
 
-The persona itself lives in local files inside the backend: a markdown style profile and a JSON persona definition. Swapping in a new persona means swapping those files.
+Each persona lives in its own folder under `backend/app/data/persona/<persona_id>/` with a markdown style profile (`profile.md`) and a JSON persona definition (`persona.json`). Adding a new persona means dropping in a new folder.
 
 ## Tech stack
 
-Backend runs on Python 3.11 with FastAPI, managed by Poetry. A single endpoint at `POST /api/generate` handles every request.
+Backend runs on Python 3.11 with FastAPI, managed by Poetry. `GET /api/personas` lists the personas the frontend can choose from. `POST /api/generate` drafts a reply for the selected `persona_id`.
 
 Frontend is React with TypeScript and Vite, styled mobile first so it feels native on a phone and still works on a desktop browser.
 
@@ -50,13 +50,13 @@ persona-pad/
 │       ├── schemas.py
 │       ├── services/persona_engine.py
 │       └── data/
-│           ├── persona/
-│               ├── john_smith/
+│           └── persona/
+│               ├── van_keith/
+│               │   ├── profile.md
+│               │   └── persona.json
+│               └── mike_ross/
 │                   ├── profile.md
-│                   ├── persona.md
-│               ├── mike_ross/
-│                   ├── profile.md
-│                   ├── persona.md
+│                   └── persona.json
 ├── frontend/
 │   └── src/
 │       ├── App.tsx
