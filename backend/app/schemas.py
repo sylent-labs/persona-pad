@@ -13,6 +13,7 @@ class GenerateRequest(BaseModel):
     Objective: Inbound payload for POST /api/generate
     """
 
+    persona_id: str = Field(min_length=1, max_length=64)
     question: str = Field(min_length=1, max_length=5000)
     context: str = Field(default="", max_length=5000)
     mode: Mode
@@ -32,8 +33,18 @@ class GenerateResponse(BaseModel):
 class Example(BaseModel):
     """
     Class: Example
-    Objective: One few-shot pair loaded from persona_vk.json
+    Objective: One few-shot pair loaded from a persona's persona.json
     """
 
     question: str
     answer: str
+
+
+class Persona(BaseModel):
+    """
+    Class: Persona
+    Objective: Lightweight metadata for a persona that the frontend dropdown can render
+    """
+
+    id: str
+    display_name: str

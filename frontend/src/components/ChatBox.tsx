@@ -1,29 +1,64 @@
 import { useState } from "react";
 
-import type { GenerateRequest, Mode } from "../api/types";
+import type { GenerateRequest, Mode, Persona } from "../api/types";
 import { MODES } from "../api/types";
 
 interface ChatBoxProps {
+  personas: Persona[];
+  personaId: string;
+  onPersonaChange: (personaId: string) => void;
   onSubmit: (req: GenerateRequest) => void;
   loading: boolean;
 }
 
-export function ChatBox({ onSubmit, loading }: ChatBoxProps) {
+export function ChatBox({
+  personas,
+  personaId,
+  onPersonaChange,
+  onSubmit,
+  loading,
+}: ChatBoxProps) {
   const [question, setQuestion] = useState("");
   const [context, setContext] = useState("");
   const [mode, setMode] = useState<Mode>("professional_vk");
 
   const trimmed = question.trim();
-  const disabled = loading || trimmed.length === 0;
+  const personasReady = personas.length > 0 && personaId.length > 0;
+  const disabled = loading || trimmed.length === 0 || !personasReady;
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (disabled) return;
-    onSubmit({ question: trimmed, context: context.trim(), mode });
+    onSubmit({
+      persona_id: personaId,
+      question: trimmed,
+      context: context.trim(),
+      mode,
+    });
   }
 
   return (
     <form className="chatbox" onSubmit={handleSubmit}>
+      <label className="field">
+        <span className="field-label">Persona</span>
+        <select
+          name="persona"
+          value={personaId}
+          onChange={(e) => onPersonaChange(e.target.value)}
+          disabled={personas.length === 0}
+        >
+          {personas.length === 0 ? (
+            <option value="">Loading personas...</option>
+          ) : (
+            personas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.display_name}
+              </option>
+            ))
+          )}
+        </select>
+      </label>
+
       <label className="field">
         <span className="field-label">Question</span>
         <textarea

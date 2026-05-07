@@ -1,6 +1,12 @@
 export type Mode = "raw_vk" | "professional_vk" | "short_vk";
 
+export interface Persona {
+  id: string;
+  display_name: string;
+}
+
 export interface GenerateRequest {
+  persona_id: string;
   question: string;
   context: string;
   mode: Mode;

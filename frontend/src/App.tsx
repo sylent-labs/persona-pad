@@ -1,14 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { generateDraft } from "./api/client";
-import type { GenerateRequest, GenerateResponse } from "./api/types";
+import { generateDraft, listPersonas } from "./api/client";
+import type { GenerateRequest, GenerateResponse, Persona } from "./api/types";
 import { ChatBox } from "./components/ChatBox";
 import { ResponseCard } from "./components/ResponseCard";
 
 function App() {
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [personaId, setPersonaId] = useState<string>("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    listPersonas()
+      .then((items) => {
+        if (cancelled) return;
+        setPersonas(items);
+        const first = items[0];
+        if (first) {
+          setPersonaId((prev) => prev || first.id);
+        }
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Failed to load personas");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(req: GenerateRequest) {
     setLoading(true);
@@ -29,12 +51,18 @@ function App() {
       <header className="app-header">
         <h1>PersonaPad</h1>
         <p className="tagline">
-          Drafts replies in VK&apos;s voice. Donna reviews and copies. We do not
-          pretend to <em>be</em> VK.
+          Drafts replies in the persona&apos;s voice. You review and copy. We do
+          not pretend to <em>be</em> them.
         </p>
       </header>
 
-      <ChatBox onSubmit={handleSubmit} loading={loading} />
+      <ChatBox
+        personas={personas}
+        personaId={personaId}
+        onPersonaChange={setPersonaId}
+        onSubmit={handleSubmit}
+        loading={loading}
+      />
 
       {error ? <div className="error">{error}</div> : null}
 

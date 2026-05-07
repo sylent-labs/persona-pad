@@ -6,6 +6,9 @@ Test coverage:
 - Bad mode is rejected at the Pydantic boundary
 - POST /api/generate end-to-end with a mocked LLM
 - RateLimitError maps to HTTP 429
+- list_personas discovers the on-disk persona directories
+- GET /api/personas returns the discovered personas
+- Unknown persona_id maps to HTTP 404
 - Live smoke test (skipped unless OPENAI_API_KEY is set)
 """
 
@@ -28,7 +31,9 @@ from openai import RateLimitError
 
 from app.main import app
 from app.schemas import GenerateRequest, GenerateResponse
-from app.services.persona_engine import generate_vk_response
+from app.services.persona_engine import generate_response, list_personas
+
+_DEFAULT_PERSONA_ID = "van_keith"
 
 
 # ============================================================================
@@ -88,6 +93,45 @@ def fixture_rate_limit_maps_to_429() -> tuple[bool, int, str]:
     return run_rate_limit_maps_to_429()
 
 
+@pytest.fixture
+def fixture_list_personas() -> tuple[bool, list[dict[str, str]], str]:
+    """
+    Method: fixture_list_personas
+    Objective: Fixture for list_personas returning the on-disk personas
+    Parameters:
+        None
+    Return:
+        tuple[bool, list[dict[str, str]], str]: (success, items_as_dicts, error)
+    """
+    return run_list_personas()
+
+
+@pytest.fixture
+def fixture_personas_endpoint() -> tuple[bool, int, list[dict[str, str]], str]:
+    """
+    Method: fixture_personas_endpoint
+    Objective: Fixture for GET /api/personas
+    Parameters:
+        None
+    Return:
+        tuple[bool, int, list[dict[str, str]], str]: (success, status_code, body, error)
+    """
+    return run_personas_endpoint()
+
+
+@pytest.fixture
+def fixture_unknown_persona_404() -> tuple[bool, int, str]:
+    """
+    Method: fixture_unknown_persona_404
+    Objective: Fixture asserting an unknown persona_id maps to HTTP 404
+    Parameters:
+        None
+    Return:
+        tuple[bool, int, str]: (error_raised, status_code, message)
+    """
+    return run_unknown_persona_404()
+
+
 # ============================================================================
 # RUNNERS
 # ============================================================================
@@ -129,7 +173,8 @@ def run_generate_with_mock() -> tuple[bool, GenerateResponse | None, str]:
             client.chat.completions.parse.return_value = _fake_completion()
             mock_get_client.return_value = client
 
-            response = generate_vk_response(
+            response = generate_response(
+                persona_id=_DEFAULT_PERSONA_ID,
                 question="Why should we hire you?",
                 context="Recruiter screening",
                 mode="professional_vk",
@@ -152,7 +197,12 @@ def run_invalid_mode() -> tuple[bool, str, type]:
 
     try:
         GenerateRequest.model_validate(
-            {"question": "hi", "context": "", "mode": "elite_vk"}
+            {
+                "persona_id": _DEFAULT_PERSONA_ID,
+                "question": "hi",
+                "context": "",
+                "mode": "elite_vk",
+            }
         )
         return False, "no error raised", type(None)
     except ValidationError as e:
@@ -182,6 +232,7 @@ def run_generate_endpoint() -> tuple[bool, int, dict[str, Any], str]:
                 r = test_client.post(
                     "/api/generate",
                     json={
+                        "persona_id": _DEFAULT_PERSONA_ID,
                         "question": "Are you available next week?",
                         "context": "recruiter",
                         "mode": "professional_vk",
@@ -216,8 +267,64 @@ def run_rate_limit_maps_to_429() -> tuple[bool, int, str]:
             )
             mock_get_client.return_value = client
 
-            generate_vk_response("hi", "", "short_vk")
+            generate_response(_DEFAULT_PERSONA_ID, "hi", "", "short_vk")
             return False, 0, "expected HTTPException, got none"
+    except HTTPException as e:
+        return True, e.status_code, str(e.detail)
+    except Exception as e:
+        return False, 0, f"wrong error type: {e}"
+
+
+def run_list_personas() -> tuple[bool, list[dict[str, str]], str]:
+    """
+    Method: run_list_personas
+    Objective: Call list_personas() and serialize results for inspection
+    Parameters:
+        None
+    Return:
+        tuple[bool, list[dict[str, str]], str]: (success, items_as_dicts, error)
+    """
+    try:
+        items = [p.model_dump() for p in list_personas()]
+        return True, items, ""
+    except Exception as e:
+        return False, [], str(e)
+
+
+def run_personas_endpoint() -> tuple[bool, int, list[dict[str, str]], str]:
+    """
+    Method: run_personas_endpoint
+    Objective: Hit GET /api/personas and return the parsed body
+    Parameters:
+        None
+    Return:
+        tuple[bool, int, list[dict[str, str]], str]: (success, status_code, body, error)
+    """
+    try:
+        with TestClient(app) as test_client:
+            r = test_client.get("/api/personas")
+            return True, r.status_code, r.json(), ""
+    except Exception as e:
+        return False, 0, [], str(e)
+
+
+def run_unknown_persona_404() -> tuple[bool, int, str]:
+    """
+    Method: run_unknown_persona_404
+    Objective: Confirm an unknown persona_id raises HTTPException(404)
+    Parameters:
+        None
+    Return:
+        tuple[bool, int, str]: (error_raised, status_code, message)
+    """
+    try:
+        generate_response(
+            persona_id="nobody_here",
+            question="hi",
+            context="",
+            mode="short_vk",
+        )
+        return False, 0, "expected HTTPException, got none"
     except HTTPException as e:
         return True, e.status_code, str(e.detail)
     except Exception as e:
@@ -306,6 +413,65 @@ def test_rate_limit_maps_to_429(
     assert "rate" in message.lower(), f"expected rate-limit message, got: {message}"
 
 
+def test_list_personas_includes_van_keith(
+    fixture_list_personas: tuple[bool, list[dict[str, str]], str],
+) -> None:
+    """
+    Method: test_list_personas_includes_van_keith
+    Objective: Verify list_personas() finds the van_keith persona on disk
+    Parameters:
+        fixture_list_personas (tuple): (success, items_as_dicts, error)
+    Return:
+        None
+    """
+    success, items, error = fixture_list_personas
+
+    assert success, f"list_personas failed: {error}"
+    ids = [p["id"] for p in items]
+    assert _DEFAULT_PERSONA_ID in ids, f"expected {_DEFAULT_PERSONA_ID} in {ids}"
+    vk = next(p for p in items if p["id"] == _DEFAULT_PERSONA_ID)
+    assert vk["display_name"] == "Van Keith", f"unexpected display_name: {vk!r}"
+
+
+def test_personas_endpoint_returns_200_and_list(
+    fixture_personas_endpoint: tuple[bool, int, list[dict[str, str]], str],
+) -> None:
+    """
+    Method: test_personas_endpoint_returns_200_and_list
+    Objective: Verify GET /api/personas returns 200 with a list of personas
+    Parameters:
+        fixture_personas_endpoint (tuple): (success, status_code, body, error)
+    Return:
+        None
+    """
+    success, status_code, body, error = fixture_personas_endpoint
+
+    assert success, f"endpoint call failed: {error}"
+    assert status_code == 200, f"expected 200, got {status_code}: {body}"
+    assert isinstance(body, list), f"expected list, got {type(body).__name__}"
+    assert any(p.get("id") == _DEFAULT_PERSONA_ID for p in body), (
+        f"expected {_DEFAULT_PERSONA_ID} in body: {body}"
+    )
+
+
+def test_unknown_persona_id_returns_404(
+    fixture_unknown_persona_404: tuple[bool, int, str],
+) -> None:
+    """
+    Method: test_unknown_persona_id_returns_404
+    Objective: Verify an unknown persona_id raises HTTPException(404)
+    Parameters:
+        fixture_unknown_persona_404 (tuple): (error_raised, status_code, message)
+    Return:
+        None
+    """
+    error_raised, status_code, message = fixture_unknown_persona_404
+
+    assert error_raised, f"expected HTTPException, got nothing. message={message}"
+    assert status_code == 404, f"expected 404, got {status_code}"
+    assert "persona" in message.lower(), f"expected persona-not-found message, got: {message}"
+
+
 @pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY"),
     reason="Live smoke requires OPENAI_API_KEY",
@@ -319,7 +485,8 @@ def test_live_smoke() -> None:
     Return:
         None
     """
-    response = generate_vk_response(
+    response = generate_response(
+        persona_id=_DEFAULT_PERSONA_ID,
         question="Are you available for a call next week?",
         context="recruiter email",
         mode="professional_vk",
@@ -359,4 +526,23 @@ if __name__ == "__main__":
     print("--------- TEST RATE LIMIT MAPS TO 429 ----------")
     error_raised, status_code, message = run_rate_limit_maps_to_429()
     print(f"Result: {'PASSED' if error_raised and status_code == 429 else 'FAILED'}")
+    print(f"Status: {status_code}, message: {message}")
+
+    print("--------- TEST LIST PERSONAS ----------")
+    success, items, error = run_list_personas()
+    print(f"Result: {'PASSED' if success else 'FAILED'}")
+    print(f"Items: {items}")
+    if error:
+        print(f"Error: {error}")
+
+    print("--------- TEST PERSONAS ENDPOINT ----------")
+    success, status_code, body, error = run_personas_endpoint()
+    print(f"Result: {'PASSED' if success and status_code == 200 else 'FAILED'}")
+    print(f"Status: {status_code}, body: {body}")
+    if error:
+        print(f"Error: {error}")
+
+    print("--------- TEST UNKNOWN PERSONA 404 ----------")
+    error_raised, status_code, message = run_unknown_persona_404()
+    print(f"Result: {'PASSED' if error_raised and status_code == 404 else 'FAILED'}")
     print(f"Status: {status_code}, message: {message}")

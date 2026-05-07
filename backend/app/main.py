@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.schemas import GenerateRequest, GenerateResponse
-from app.services.persona_engine import generate_vk_response
+from app.schemas import GenerateRequest, GenerateResponse, Persona
+from app.services.persona_engine import generate_response, list_personas
 
 load_dotenv()
 
@@ -43,14 +43,27 @@ def root() -> dict[str, object]:
     return {"app": "persona-pad", "ok": True}
 
 
+@app.get("/api/personas", response_model=list[Persona])
+def personas() -> list[Persona]:
+    """
+    Method: personas
+    Objective: List the personas that the frontend dropdown can choose from
+    Parameters:
+        None
+    Return:
+        list[Persona]: discovered personas, sorted by id
+    """
+    return list_personas()
+
+
 @app.post("/api/generate", response_model=GenerateResponse)
 def generate(req: GenerateRequest) -> GenerateResponse:
     """
     Method: generate
-    Objective: Draft a VK-voice reply for the given question/context/mode
+    Objective: Draft a persona-voice reply for the given question/context/mode
     Parameters:
-        req (GenerateRequest): question, context, and mode
+        req (GenerateRequest): persona_id, question, context, and mode
     Return:
         GenerateResponse: draft, alternate, style_notes
     """
-    return generate_vk_response(req.question, req.context, req.mode)
+    return generate_response(req.persona_id, req.question, req.context, req.mode)
