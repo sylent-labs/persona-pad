@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+# Frontend Vite vars are baked into the public JS bundle, so committing
+# frontend/.env.production is safe (and necessary for Vercel auto-build).
+!frontend/.env.production
 *.pem
 *credentials*
 *secret*

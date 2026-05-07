@@ -15,7 +15,9 @@ export async function listPersonas(): Promise<Persona[]> {
   return (await response.json()) as Persona[];
 }
 
-export async function generateDraft(req: GenerateRequest): Promise<GenerateResponse> {
+export async function generateDraft(
+  req: GenerateRequest,
+): Promise<GenerateResponse> {
   const response = await fetch(`${BASE_URL}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -24,7 +26,9 @@ export async function generateDraft(req: GenerateRequest): Promise<GenerateRespo
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`Generate failed (${response.status}): ${detail || response.statusText}`);
+    throw new Error(
+      `Generate failed (${response.status}): ${detail || response.statusText}`,
+    );
   }
 
   return (await response.json()) as GenerateResponse;
