@@ -3,7 +3,7 @@ Tests for persona_engine and POST /api/generate.
 
 Test coverage:
 - Mocked LLM happy path returns the GenerateResponse schema
-- Bad mode is rejected at the Pydantic boundary
+- Empty question is rejected at the Pydantic boundary
 - POST /api/generate end-to-end with a mocked LLM
 - RateLimitError maps to HTTP 429
 - list_personas discovers the on-disk persona directories
@@ -55,16 +55,16 @@ def fixture_generate_with_mock() -> tuple[bool, GenerateResponse | None, str]:
 
 
 @pytest.fixture
-def fixture_invalid_mode() -> tuple[bool, str, type]:
+def fixture_invalid_request() -> tuple[bool, str, type]:
     """
-    Method: fixture_invalid_mode
-    Objective: Fixture for Pydantic validation of an unknown mode value
+    Method: fixture_invalid_request
+    Objective: Fixture asserting Pydantic rejects a malformed GenerateRequest
     Parameters:
         None
     Return:
         tuple[bool, str, type]: (error_raised, message, exception_type)
     """
-    return run_invalid_mode()
+    return run_invalid_request()
 
 
 @pytest.fixture
@@ -183,10 +183,10 @@ def run_generate_with_mock() -> tuple[bool, GenerateResponse | None, str]:
         return False, None, str(e)
 
 
-def run_invalid_mode() -> tuple[bool, str, type]:
+def run_invalid_request() -> tuple[bool, str, type]:
     """
-    Method: run_invalid_mode
-    Objective: Confirm Pydantic rejects an unknown mode value
+    Method: run_invalid_request
+    Objective: Confirm Pydantic rejects a GenerateRequest with an empty question
     Parameters:
         None
     Return:
@@ -198,7 +198,7 @@ def run_invalid_mode() -> tuple[bool, str, type]:
         GenerateRequest.model_validate(
             {
                 "persona_id": _DEFAULT_PERSONA_ID,
-                "question": "hi",
+                "question": "",
                 "mode": "raw",
             }
         )
@@ -352,20 +352,20 @@ def test_generate_with_mock_returns_schema(
     assert response.style_notes, "style_notes should be non-empty"
 
 
-def test_invalid_mode_rejected(
-    fixture_invalid_mode: tuple[bool, str, type],
+def test_invalid_request_rejected(
+    fixture_invalid_request: tuple[bool, str, type],
 ) -> None:
     """
-    Method: test_invalid_mode_rejected
-    Objective: Verify Pydantic rejects an unknown mode value
+    Method: test_invalid_request_rejected
+    Objective: Verify Pydantic rejects an empty question
     Parameters:
-        fixture_invalid_mode (tuple): (error_raised, message, exception_type)
+        fixture_invalid_request (tuple): (error_raised, message, exception_type)
     Return:
         None
     """
     from pydantic import ValidationError
 
-    error_raised, message, exception_type = fixture_invalid_mode
+    error_raised, message, exception_type = fixture_invalid_request
 
     assert error_raised, f"expected ValidationError, got: {message}"
     assert exception_type is ValidationError, f"wrong exception type: {exception_type}"
@@ -506,8 +506,8 @@ if __name__ == "__main__":
     if error:
         print(f"Error: {error}")
 
-    print("--------- TEST INVALID MODE ----------")
-    error_raised, message, exception_type = run_invalid_mode()
+    print("--------- TEST INVALID REQUEST ----------")
+    error_raised, message, exception_type = run_invalid_request()
     print(f"Result: {'PASSED' if error_raised else 'FAILED'}")
     print(f"Exception type: {exception_type.__name__}")
 
