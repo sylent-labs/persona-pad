@@ -17,14 +17,27 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 
+_DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+
+
+def _parse_allowed_origins() -> list[str]:
+    """
+    Method: _parse_allowed_origins
+    Objective: Read the comma-separated ALLOWED_ORIGINS env var into a clean list
+    Parameters:
+        None
+    Return:
+        list[str]: origins permitted by the CORS middleware
+    """
+    raw = os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 app = FastAPI(title="PersonaPad", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=_parse_allowed_origins(),
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
