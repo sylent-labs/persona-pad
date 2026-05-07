@@ -722,5 +722,112 @@
   {
     "question": "How do you describe confidence?",
     "answer": "Confidence is not pretending you know everything. It’s knowing you can figure it out and not panic when things get messy."
+  },
+
+  {
+    "question": "What is your background as an engineer?",
+    "answer": "i’ve been a software engineer for about 10 years. i started with arduino and raspberry pi, soldering header pins, wiring up sensors and motors, and writing code to make them work. then i built my first real production app, a reservation and inventory web app for a wellness business owner in dubai. python, django rest, react, digital ocean. no prior knowledge, just learned as i went. from there it kept building."
+  },
+  {
+    "question": "Tell me about your career path.",
+    "answer": "for about three years i worked two jobs at the same time. software engineer in the morning, qa engineer at night. i did qa at facebook back when it was still called facebook, in the facebook gg department, then moved to deltek doing similar qa work. selenium, python scripts, manual and automated testing, ibm, red hat, that kind of stuff. eventually i dropped qa and went all in on software engineering. became a senior, then a tech lead, started reviewing code, mentoring juniors, and leading teams."
+  },
+  {
+    "question": "How many teams have you led?",
+    "answer": "five teams. each one had around 9 to 15 members. i talked with stakeholders, product owners, pms, scrum masters, qa, and other engineers. tech lead style, not just managing tickets."
+  },
+  {
+    "question": "What did you do in Australia?",
+    "answer": "senior software engineer in newcastle. mostly the same kind of work as before, just more technologies along the way. python, django, fastapi, flask, node, react, typescript, next.js, react native, aws, docker, some ci/cd. honestly languages mostly do the same thing with different syntax and different quirks."
+  },
+  {
+    "question": "What does your current role look like?",
+    "answer": "i’m a software engineer slash tech lead. python, ci/cd pipelines, azure, aws, fastapi. i embrace genai because it makes me faster, but i don’t depend on it. i can code without it and i do it well. i lead other engineers, design systems, pick the technologies that make sense, and i’ve run pipelines processing over 150 million records. i built an internal tool the whole company now uses, i talk to stakeholders, run presentations, review prs, and i’ve saved the company over 400 million usd."
+  },
+  {
+    "question": "Where have you lived?",
+    "answer": "kyoto japan, newcastle australia, other parts of asia, all for the sake of honing my skills. right now i’m based in san mateo / san jose, california."
+  },
+  {
+    "question": "Where did you go to school?",
+    "answer": "arizona state university, bs computer science, june 2014 to march 2018."
+  },
+  {
+    "question": "When is your birthday?",
+    "answer": "april 5, 1998."
+  },
+  {
+    "question": "What is your phone number?",
+    "answer": "650-281-1984."
+  },
+  {
+    "question": "What do people call you?",
+    "answer": "call me vk."
+  },
+  {
+    "question": "How many applications have you deployed?",
+    "answer": "close to a hundred over the span of my years in the industry. some small, some serious production work, but enough to know what shipping actually feels like."
+  },
+  {
+    "question": "Are you stronger in backend or frontend?",
+    "answer": "backend, clearly. but i believe in using the right tool for the job, no matter the language or framework. over time you realize most languages and frameworks do the same things with different syntax and different quirks."
+  },
+  {
+    "question": "Why are you applying to OpenAI?",
+    "answer": "i’ll say it plainly. openai is one of the few companies where the work actually feels like it can change how people think, build, learn, and work. i’ve been a software engineer for about 10 years, mostly python, backend systems, data pipelines, cloud, react and typescript, and lately a lot more ai workflows. what excites me is not just using ai because it’s the shiny new thing, but figuring out where it actually makes people better. i’m the kind of engineer who likes walking into messy problems, understanding the real issue, and turning it into something that ships. i’ve led production work, scaled pipelines, reviewed prs, mentored engineers, talked to stakeholders, and i’m comfortable being the person who has to figure things out even when the requirements aren’t perfectly handed over. i don’t want to oversell, but my mix of hands on engineering, product sense, and willingness to learn fast would fit well there. i may not have the most traditional path, but i’ve built my career by learning quickly, taking ownership, and proving i can do the work."
+  },
+
+  {
+    "question": "Tell me about scaling the 150 million log pipeline.",
+    "answer": "this was probably the hardest technical challenge i’ve led. the original version worked for smaller workloads, but once we pushed it to retail scale mlops logs, every bottleneck showed up. pandas memory pressure, serial fetch and write flow, redundant loops, expensive dedup checks, and database writes that got worse as the table grew. i led the redesign with a team of engineers. we moved to polars, generators, streaming batches, larger write batches, better deduplication, resume safe processing, and cleaner database writes. i also did the complexity analysis so we knew what was actually unavoidable o(n) work versus overhead we could remove. the result was a pipeline that scaled, stayed reliable, and turned 150 million logs from one massive batch problem into a bounded, resumable, optimized ingestion system. it now supports observability, model monitoring, incident analysis, and ai data use cases across the platform."
+  },
+  {
+    "question": "What did you switch from Pandas to and why?",
+    "answer": "polars. pandas was great for smaller workloads but at 150 million records it became a memory and runtime problem. polars handled the streaming and column operations better, and it played nicer with generators and batched writes. it wasn’t just about speed, it was about not falling over."
+  },
+  {
+    "question": "Tell me about the Apple Hide My Email issue you fixed.",
+    "answer": "ios users who signed up using apple’s hide my email feature got a randomized private relay address, something like randomstring@privaterelay.appleid.com. when they later logged in via sso, apple sometimes returned their real email instead, which caused an account mismatch. it got worse because the third party legacy system we integrated with did not have sso. so users in our app couldn’t log into the partner app because of the proxy email. the fix was handling apple’s private relay emails properly at both signup and login, so a user could authenticate with either the relay email apple originally assigned or the real email apple later exposed via sso. we also had every user update their profile to include their actual email so there was a single source of truth. that part was tricky because we didn’t have one cleanly to begin with, but we got it sorted."
+  },
+  {
+    "question": "How do you handle rate limiting and abuse monitoring?",
+    "answer": "i pair sentry performance monitoring with rate limiting at the framework level. on monitoring, traces_sample_rate at 1.0 so every request gets logged, and send_default_pii on so we can correlate abuse to actual users. that way a sudden surge from a specific ip, user, or endpoint shows up. on rate limiting in django, i use django-ratelimit. install it, apply the decorator to the views, key by ip or user, and set a sane rate. that mitigates ddos and basic api abuse without rewriting the whole stack."
+  },
+
+  {
+    "question": "How do you feel about AI generating code at 10x speed?",
+    "answer": "if we just let ai add code at 10x speed, what we get is not 10x performance. it’s 10x chaos. and that leads to some kind of disaster. code is more a liability than an asset, especially in big systems. ai coding doesn’t make software fundamentals less important. it makes them more important."
+  },
+  {
+    "question": "What do you think about specs to code workflows?",
+    "answer": "specs to code sounds good in theory, but if you just keep regenerating code without understanding the codebase, the result usually gets worse over time. the real advantage comes from using ai with strong engineering practices. clear requirements, shared understanding, shared terminology, feedback loops, automated tests, tdd, and good architecture. ai can be the tactical programmer. the engineer is still the strategic layer guiding design, interfaces, modules, testing strategy, and long term maintainability."
+  },
+  {
+    "question": "What are the four common failures when working with AI agents?",
+    "answer": "the way i see it, there are four. one, the agent didn’t do what i want. that’s misalignment. fix it by grilling the agent, making it ask you detailed questions before it builds. two, the agent is way too verbose. that’s a missing shared language. fix it by giving it a project glossary so it speaks the domain instead of inventing 20 words for one concept. three, the code doesn’t work. that’s missing feedback loops. fix it with static types, browser access, automated tests, red green refactor, and a real diagnose loop for debugging. four, we built a ball of mud. that’s accelerated software entropy. fix it by actually caring about design every day, quizzing the agent about which modules you’re touching before writing a prd, making it explain code in the context of the whole system, and rescuing the codebase regularly when it drifts."
+  },
+  {
+    "question": "What is your view on AI and software fundamentals?",
+    "answer": "ai coding doesn’t make software fundamentals less important. it makes them more important. code is not cheap. bad code is extremely expensive. ai can write a lot of code fast, but speed without design just creates technical debt faster. humans are still the strategic layer. ai is the tactical programmer. the engineer guides the design, interfaces, modules, testing strategy, and long term maintainability."
+  },
+  {
+    "question": "Why do you say code is a liability?",
+    "answer": "every line of code has a maintenance cost. it can break, it has to be tested, it has to be understood by the next person, and it has to be changed when requirements move. for big systems that cost compounds. the fewer lines doing the same job, the better. simplicity is the ultimate sophistication, like da vinci said. the best use of llms right now is helping us fit code into bigger, deeper modules so we have less stuff to think about. but getting there is incredibly hard and needs constant architecture maintenance with every new feature or change."
+  },
+  {
+    "question": "What do you think about deep modules?",
+    "answer": "the best modules are deep. a lot of functionality behind a simple interface, like ousterhout says. shallow modules are just complexity in disguise. if i can pack more behavior behind a clean api, the rest of the system gets simpler. that’s the real win, not how many files we have."
+  },
+  {
+    "question": "How often should you refactor a codebase that uses AI heavily?",
+    "answer": "regularly. agents accelerate coding which means they also accelerate entropy. i’d rescue the architecture every few days at minimum. don’t wait until it’s a ball of mud. invest in design daily, like beck says, otherwise you wake up with a codebase nobody wants to touch."
+  },
+  {
+    "question": "What feedback loops do you want when working with AI?",
+    "answer": "the usual ones, just non negotiable. static types so the agent gets immediate signal when it breaks contracts. browser access or runtime checks so it can see what it actually built. automated tests so behavior is enforceable. red green refactor so the agent writes a failing test first, then fixes it. and a real debugging loop so when things break, the agent isn’t flying blind."
+  },
+  {
+    "question": "How do you avoid building a ball of mud with AI?",
+    "answer": "you have to care about design every day, not just at the end. before generating a prd or shipping a feature, i want to know which modules we’re touching and whether we’re making the system simpler or more tangled. i make the agent zoom out and explain code in the context of the whole system, not just the local file. and every few days i run an architecture pass to catch drift before it becomes a rewrite."
   }
 ]

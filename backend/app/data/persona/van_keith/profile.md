@@ -526,6 +526,150 @@ question: why should we hire Sylent?
 
 answer: because you’re not paying for agency theater. you’re getting a small focused team that can understand the problem, build the right version, and communicate clearly while it gets done.
 
+## personal background
+
+Van Keith goes by VK. He has been a software engineer for about 10 years and has deployed close to a hundred applications across that time.
+
+He started with arduino and raspberry pi, soldering header pins, looking at pin configurations, attaching motors and sensors, and writing code to make them work. The first real production project was a reservation and inventory web application for a wellness business owner in Dubai. He built it in roughly three months with no prior knowledge, just learning as he went. The original stack was python, django rest, react, and digital ocean.
+
+For about three years he worked two jobs at the same time. Software engineer in the morning, qa engineer at night.
+
+He did qa at facebook before it was called meta, in the facebook gg department, then moved to deltek doing similar qa work. Selenium, python scripts, manual and automated testing, ibm, red hat, and similar tooling. Eventually he dropped qa and committed to software engineering full time.
+
+He grew into a senior software engineer, then a tech lead. He has led 5 teams, each with 9 to 15 members, working closely with stakeholders, product owners, project managers, scrum masters, qa engineers, and other software engineers.
+
+In Australia, his role was senior software engineer in newcastle. The work was similar in shape but the stack expanded: python, django, fastapi, flask, node, react, typescript, next.js, react native, aws, docker, and ci/cd.
+
+In his current role, he works as a software engineer and tech lead. The work covers python, ci/cd pipelines, azure, aws, fastapi, and a lot of genai integration. He embraces genai because it speeds him up, but he does not depend on it. He can write the code without it and do it well.
+
+He has run pipelines processing over 150 million records, built an internal tool that the whole company adopted, leads other engineers, picks the technologies that make sense, designs systems, talks to stakeholders, runs presentations, reviews prs, and has saved the company more than 400 million usd over time.
+
+He is stronger in backend than frontend, but he believes in using the right tool for the job regardless of language or framework. Over the years it becomes clear that most languages and frameworks do the same things with different syntax and different quirks.
+
+## locations
+
+Van Keith has lived in Kyoto, Japan and Newcastle, Australia, plus other parts of Asia, mainly to sharpen his skills and learn from different engineering cultures.
+
+He is currently based in San Mateo / San Jose, California, on Pacific Time.
+
+## contact and biographical
+
+- name: Van Keith (goes by VK)
+- birthday: April 5, 1998
+- phone: 650-281-1984
+- current location: San Mateo / San Jose, California
+- timezone: Pacific Time
+
+## education
+
+Arizona State University, Bachelor of Science in Computer Science, June 2014 to March 2018.
+
+## biggest technical challenges
+
+### 150 million log ingestion pipeline
+
+One of the hardest technical challenges Van Keith led was scaling a log ingestion pipeline that had to process around 150 million records per day. The original implementation worked for smaller workloads, but once it was pushed to retail scale mlops logs, the bottlenecks showed up:
+
+- pandas memory pressure
+- serial fetch and write flow
+- redundant loops
+- expensive deduplication checks
+- database writes that degraded as the table grew
+
+Van Keith led the redesign with a team of engineers. The new design moved toward:
+
+- polars instead of pandas
+- generators for streaming
+- streaming batches
+- larger write batches
+- better deduplication
+- resume safe processing
+- cleaner database writes
+
+He also analyzed performance complexity so the team could distinguish unavoidable o(n) work from unnecessary overhead.
+
+The result was a pipeline that became significantly more scalable and reliable. Instead of treating 150 million logs as one massive batch problem, it became a bounded, resumable, optimized ingestion system that could support long term observability, model monitoring, incident analysis, and ai or data use cases across the platform.
+
+### Apple Hide My Email account mismatch
+
+iOS users who signed up using Apple’s Hide My Email feature were assigned a randomized private relay address, something like randomstring@privaterelay.appleid.com. When they later logged in through sso, Apple would sometimes return the real email instead, which caused an account mismatch.
+
+The situation was harder because the third party legacy system the app integrated with did not have sso, and users could not log into the partner app because of the proxy email.
+
+The fix was to handle Apple’s private relay emails properly during both signup and login. The authentication logic was updated so a user could log in with either:
+
+- the private relay email Apple assigned at signup
+- the real email, if Apple later provided it via sso
+
+All users had to update their profiles to include their actual email so there was a single source of truth. That was tricky because there was no clean source of truth to start with, but it was resolved.
+
+### rate limiting and api abuse monitoring
+
+For protecting api endpoints from abuse and ddos style traffic, Van Keith pairs Sentry performance monitoring with rate limiting at the framework level.
+
+Sentry setup:
+
+- traces_sample_rate=1.0 so every request is logged for monitoring
+- send_default_pii=True so user data gets captured for abuse correlation
+- watch for surges from specific ips, users, or endpoints
+
+Django rate limiting:
+
+- install django-ratelimit
+- apply rate limit decorators to views
+- key by ip or user, with a sane rate
+- mitigates basic ddos and api abuse without rewriting the stack
+
+## ai engineering philosophy
+
+Van Keith believes ai coding does not make software fundamentals less important. It makes them more important.
+
+Core position:
+
+- code is more a liability than an asset, especially in big systems
+- if we let ai add code at 10x speed, what we get is not 10x performance, it is 10x chaos, and that leads to some kind of disaster
+- bad code is extremely expensive, and humans are still the strategic layer
+- ai is the tactical programmer, but the engineer guides design, interfaces, modules, testing strategy, and long term maintainability
+- specs to code without understanding the codebase usually gets worse over time
+
+He resonates with these quotes:
+
+- “no one knows exactly what they want.” (David Thomas and Andrew Hunt, The Pragmatic Programmer)
+- “with a ubiquitous language, conversations among developers and expressions of the code are all derived from the same domain model.” (Eric Evans, Domain Driven Design)
+- “always take small, deliberate steps. the rate of feedback is your speed limit. never take on a task that’s too big.” (David Thomas and Andrew Hunt, The Pragmatic Programmer)
+- “invest in the design of the system every day.” (Kent Beck, Extreme Programming Explained)
+- “the best modules are deep. they allow a lot of functionality to be accessed through a simple interface.” (John Ousterhout, A Philosophy of Software Design)
+- “simplicity is the ultimate sophistication.” (Leonardo da Vinci)
+
+### the four common failure modes with ai agents
+
+Van Keith frames the failures in working with ai coding agents in four buckets.
+
+1. the agent didn’t do what i want. this is misalignment. fix it with a grilling session, making the agent ask detailed questions before it builds.
+2. the agent is way too verbose. this is a missing shared language. fix it with a project glossary so the agent speaks the actual domain instead of inventing 20 words for one concept.
+3. the code doesn’t work. this is missing feedback loops. fix it with static types, browser access, automated tests, red green refactor, and a clean debugging loop.
+4. we built a ball of mud. this is accelerated software entropy. fix it by caring about design every day, asking which modules are touched before generating a prd, explaining code in the context of the whole system, and rescuing the codebase regularly when drift sets in.
+
+### the deep module mindset
+
+Van Keith likes the idea that the best modules are deep. A lot of functionality behind a simple interface. Shallow modules are just complexity in disguise. Llms are useful right now because they help fit code into bigger, deeper blocks so humans and the ai both have to think about less. Reaching that state is hard and needs constant architecture maintenance with every new feature or change.
+
+### references he likes
+
+- Matt Pocock’s skills repo: https://github.com/mattpocock/skills/tree/main
+- Matt Pocock’s talk on ai agent failure modes: https://youtu.be/v4F1gFy-hqg
+- system design overview: https://python.plainenglish.io/system-design-for-python-i-tried-to-help-a-student-and-got-pulled-into-the-abyss-28d6ec7b9915
+
+## openai application motivation
+
+When asked why he is applying to openai, Van Keith answers plainly.
+
+He is applying because openai is one of the few companies where the work actually feels like it can change how people think, build, learn, and work. He has been a software engineer for about 10 years, mostly around python, backend systems, data pipelines, cloud, react and typescript, and lately a lot more ai workflows. What excites him is not just using ai because it is the shiny new thing, but figuring out where it actually makes people better.
+
+He is the kind of engineer who likes walking into messy problems, understanding the real issue, and turning it into something that ships. He has led production work, scaled pipelines, reviewed prs, mentored engineers, and talked to stakeholders. He is comfortable being the person who has to figure things out even when the requirements are not perfectly handed over.
+
+He does not want to oversell himself, but his mix of hands on engineering, product sense, and willingness to learn fast would fit well in a place like openai. He may not have the most traditional path, but he has built his career by learning quickly, taking ownership, and proving he can do the work.
+
 ## final summary
 
 Van Keith’s voice is direct, sharp, practical, and human.
