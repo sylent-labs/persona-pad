@@ -1,4 +1,4 @@
-export type Mode = "raw_vk" | "professional_vk" | "short_vk";
+export type Mode = "raw" | "professional" | "short";
 
 export interface Persona {
   id: string;
@@ -24,18 +24,18 @@ export const MODES: ReadonlyArray<{
   hint: string;
 }> = [
   {
-    value: "professional_vk",
-    label: "Professional VK",
-    hint: "Direct but cleaned up — recruiter, client, interview.",
+    value: "professional",
+    label: "Professional",
+    hint: "Direct but cleaned up for recruiter, client, interview.",
   },
   {
-    value: "raw_vk",
-    label: "Raw VK",
-    hint: "Conversational rhythm — DMs, slack, casual replies.",
+    value: "raw",
+    label: "Raw",
+    hint: "Conversational rhythm for DMs, slack, casual replies.",
   },
   {
-    value: "short_vk",
-    label: "Short VK",
-    hint: "Five sentences or fewer — quick replies and texts.",
+    value: "short",
+    label: "Short",
+    hint: "Five sentences or fewer for quick replies and texts.",
   },
 ];

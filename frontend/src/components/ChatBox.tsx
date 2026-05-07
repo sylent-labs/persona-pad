@@ -20,7 +20,7 @@ export function ChatBox({
 }: ChatBoxProps) {
   const [question, setQuestion] = useState("");
   const [context, setContext] = useState("");
-  const [mode, setMode] = useState<Mode>("professional_vk");
+  const [mode, setMode] = useState<Mode>("raw");
 
   const trimmed = question.trim();
   const personasReady = personas.length > 0 && personaId.length > 0;

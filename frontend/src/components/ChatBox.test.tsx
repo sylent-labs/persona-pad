@@ -55,7 +55,10 @@ describe("ChatBox", () => {
       screen.getByRole("textbox", { name: /context/i }),
       "recruiter",
     );
-    await user.selectOptions(screen.getByRole("combobox", { name: /mode/i }), "raw_vk");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /mode/i }),
+      "raw",
+    );
     await user.click(screen.getByRole("button", { name: /generate/i }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -63,7 +66,7 @@ describe("ChatBox", () => {
       persona_id: "van_keith",
       question: "Why should we hire you?",
       context: "recruiter",
-      mode: "raw_vk",
+      mode: "raw",
     });
   });
 

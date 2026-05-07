@@ -25,17 +25,17 @@ _MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 _FEW_SHOT_MAX = 24
 
 _MODE_RULES: dict[Mode, str] = {
-    "raw_vk": (
-        "Mode: raw_vk. Allow conversational rhythm and lowercase casing where natural. "
+    "raw": (
+        "Mode: raw. Allow conversational rhythm and lowercase casing where natural. "
         "Repetition for emphasis is fine. Filler phrases like 'just double checking' or "
         "'my thinking is' are welcome when they fit. No profanity unless the example pool shows it."
     ),
-    "professional_vk": (
-        "Mode: professional_vk. Keep VK's directness and self-aware tone, but clean up casing "
+    "professional": (
+        "Mode: professional. Keep VK's directness and self-aware tone, but clean up casing "
         "and reduce filler words. No profanity. Suitable for recruiter, client, or interview email."
     ),
-    "short_vk": (
-        "Mode: short_vk. Five sentences or fewer. Cut ruthlessly. Preserve the voice. "
+    "short": (
+        "Mode: short. Five sentences or fewer. Cut ruthlessly. Preserve the voice. "
         "Suitable for DMs, slack, and quick replies."
     ),
 }
@@ -160,7 +160,7 @@ def _build_messages(
         persona_id (str): Which persona's profile and examples to load
         question (str): The user's question
         context (str): Situational context (e.g., "recruiter email")
-        mode (Mode): raw_vk, professional_vk, or short_vk
+        mode (Mode): raw, professional, or short
     Return:
         list[dict[str, str]]: messages in OpenAI chat completions shape
     """
@@ -206,7 +206,7 @@ def generate_response(
         persona_id (str): Which persona to draft as
         question (str): The user's question
         context (str): Situational context (e.g., "recruiter email")
-        mode (Mode): raw_vk, professional_vk, or short_vk
+        mode (Mode): raw, professional, or short
     Return:
         GenerateResponse: draft, alternate, style_notes
     """

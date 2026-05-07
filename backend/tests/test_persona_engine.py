@@ -177,7 +177,7 @@ def run_generate_with_mock() -> tuple[bool, GenerateResponse | None, str]:
                 persona_id=_DEFAULT_PERSONA_ID,
                 question="Why should we hire you?",
                 context="Recruiter screening",
-                mode="professional_vk",
+                mode="professional",
             )
             return True, response, ""
     except Exception as e:
@@ -201,7 +201,7 @@ def run_invalid_mode() -> tuple[bool, str, type]:
                 "persona_id": _DEFAULT_PERSONA_ID,
                 "question": "hi",
                 "context": "",
-                "mode": "elite_vk",
+                "mode": "professional",
             }
         )
         return False, "no error raised", type(None)
@@ -235,7 +235,7 @@ def run_generate_endpoint() -> tuple[bool, int, dict[str, Any], str]:
                         "persona_id": _DEFAULT_PERSONA_ID,
                         "question": "Are you available next week?",
                         "context": "recruiter",
-                        "mode": "professional_vk",
+                        "mode": "professional",
                     },
                 )
                 return True, r.status_code, r.json(), ""
@@ -267,7 +267,7 @@ def run_rate_limit_maps_to_429() -> tuple[bool, int, str]:
             )
             mock_get_client.return_value = client
 
-            generate_response(_DEFAULT_PERSONA_ID, "hi", "", "short_vk")
+            generate_response(_DEFAULT_PERSONA_ID, "hi", "", "short")
             return False, 0, "expected HTTPException, got none"
     except HTTPException as e:
         return True, e.status_code, str(e.detail)
@@ -322,7 +322,7 @@ def run_unknown_persona_404() -> tuple[bool, int, str]:
             persona_id="nobody_here",
             question="hi",
             context="",
-            mode="short_vk",
+            mode="short",
         )
         return False, 0, "expected HTTPException, got none"
     except HTTPException as e:
@@ -489,7 +489,7 @@ def test_live_smoke() -> None:
         persona_id=_DEFAULT_PERSONA_ID,
         question="Are you available for a call next week?",
         context="recruiter email",
-        mode="professional_vk",
+        mode="professional",
     )
 
     assert response.draft, "live LLM returned empty draft"
