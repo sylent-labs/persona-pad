@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "persona-pad-backend"
 version = "0.1.0"
-description = "FastAPI backend for Persona Pad - drafts replies in VK's voice."
-authors = ["VK <vkalmazan@gmail.com>"]
+description = "FastAPI backend for PersonaPad"
+authors = ["Van Keith <itsvankeith@gmail.com>"]
 readme = "../README.md"
 package-mode = false
 

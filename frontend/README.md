@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
+# PersonaPad Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The mobile first chat UI for PersonaPad. Built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This is the only screen the user sees. It opens a chat with the digital persona configured in the backend. The user types a message, the app calls `POST /api/generate`, and the reply renders as a bubble.
 
-## React Compiler
+The whole layout is mobile first. It must feel native on a phone before it works on a desktop browser.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the ESLint configuration
+- React 18 with TypeScript (strict mode)
+- Vite for dev server and build
+- Vitest plus React Testing Library for tests
+- Plain `fetch` through a typed API client (no SDK)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Local dev
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm install
+pnpm dev      # Vite dev server on :5173
+pnpm build
+pnpm test     # vitest
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The dev server expects the backend at `http://localhost:8000` by default. Override with the `VITE_API_BASE_URL` env var if you run the backend elsewhere.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+VITE_API_BASE_URL=http://192.168.1.20:8000 pnpm dev
 ```
+
+## Project layout
+
+```
+src/
+├── App.tsx                 # Root component, holds chat state
+├── main.tsx                # Entry point
+├── components/
+│   ├── ChatBox.tsx         # Input + send button
+│   └── ResponseCard.tsx    # Reply bubble
+└── api/
+    ├── client.ts           # Typed fetch wrapper for /api/generate
+    └── types.ts            # Mirrors backend Pydantic models
+```
+
+## Conventions
+
+- Strict TypeScript. No `any` without a comment justifying why.
+- Named exports on components; no default exports.
+- All API calls go through `src/api/client.ts`. No `fetch` inside components.
+- Types in `src/api/types.ts` must mirror the backend Pydantic models in `backend/app/schemas.py`. When one changes, change both in the same PR.
+- Tests live next to the source: `Foo.tsx` and `Foo.test.tsx`.
+
+See `.claude/rules/45-typescript-standards.md` at the repo root for the full standard.

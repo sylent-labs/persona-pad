@@ -27,7 +27,7 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <h1>Persona Pad</h1>
+        <h1>PersonaPad</h1>
         <p className="tagline">
           Drafts replies in VK&apos;s voice. Donna reviews and copies. We do not
           pretend to <em>be</em> VK.
