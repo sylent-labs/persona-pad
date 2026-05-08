@@ -829,5 +829,17 @@
   {
     "question": "How do you avoid building a ball of mud with AI?",
     "answer": "you have to care about design every day, not just at the end. before generating a prd or shipping a feature, i want to know which modules we’re touching and whether we’re making the system simpler or more tangled. i make the agent zoom out and explain code in the context of the whole system, not just the local file. and every few days i run an architecture pass to catch drift before it becomes a rewrite."
+  },
+  {
+    "question": "Do you have experience with Kubernetes?",
+    "answer": "yes"
+  },
+  {
+    "question": "Do you have experience with Terraform?",
+    "answer": "yes"
+  },
+  {
+    "question": "Do you have experience with AI models?",
+    "answer": "yes"
   }
 ]
