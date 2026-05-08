@@ -5,6 +5,30 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-08
+
+### Added
+- Global `Exception` handler in `app/main.py` so any unhandled error returns a
+  JSON 500 from inside the user middleware chain. Without this, exceptions
+  escape to Starlette's outermost `ServerErrorMiddleware` (sits outside
+  `CORSMiddleware`), producing a bare `text/plain` 500 with no
+  `Access-Control-Allow-Origin` header. The browser then surfaces it as a
+  CORS error and the real cause is hidden in the server log.
+
+### Changed
+- `requirements.txt` now includes `numpy>=2.0,<3` so production deploys (which
+  install via pip, not Poetry) match the `pyproject.toml` constraint and
+  `example_selector` can import.
+
+### Fixed
+- Exception catches in `persona_engine.generate_response` and
+  `example_selector.select_examples` broadened from `APIError` to
+  `OpenAIError` (the SDK base class). This covers the missing-API-key case,
+  where `OpenAI()` raises `OpenAIError` directly, plus any other
+  non-`APIError` SDK errors. Previously these escaped the catch and produced
+  a CORS-shaped 500 in the browser; now they surface as a clean 502 with a
+  `LLM provider error` / `embedding ...` detail and proper CORS headers.
+
 ## [0.2.0] - 2026-05-07
 
 ### Added
