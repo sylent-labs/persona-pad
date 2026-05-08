@@ -197,8 +197,12 @@ def _build_messages(
     Return:
         list[dict[str, str]]: messages in OpenAI chat completions shape
     """
+    # Local import to avoid a circular dependency: example_selector imports
+    # _load_examples from this module.
+    from app.services.example_selector import select_examples
+
     profile = _load_style_profile(persona_id)
-    examples = _load_examples(persona_id)[:_FEW_SHOT_MAX]
+    examples = select_examples(persona_id, question, _FEW_SHOT_MAX)
 
     system_content = (
         f"{profile}\n\n"
