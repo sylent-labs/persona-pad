@@ -6,7 +6,7 @@ from functools import lru_cache
 
 import numpy as np
 from numpy.typing import NDArray
-from openai import APIError, APITimeoutError, OpenAI, RateLimitError
+from openai import APITimeoutError, OpenAI, OpenAIError, RateLimitError
 
 from app.schemas import Example
 from app.services.persona_engine import _load_examples
@@ -106,7 +106,7 @@ def select_examples(
 
     try:
         cached_examples, matrix = _load_examples_with_embeddings(persona_id)
-    except (RateLimitError, APITimeoutError, APIError):
+    except (RateLimitError, APITimeoutError, OpenAIError):
         logger.warning(
             "embedding example pool failed, falling back to first-k",
             extra={"persona_id": persona_id, "k": k},
@@ -118,7 +118,7 @@ def select_examples(
             model=_EMBEDDING_MODEL,
             input=[question],
         )
-    except (RateLimitError, APITimeoutError, APIError):
+    except (RateLimitError, APITimeoutError, OpenAIError):
         logger.warning(
             "embedding query failed, falling back to first-k",
             extra={"persona_id": persona_id, "k": k},

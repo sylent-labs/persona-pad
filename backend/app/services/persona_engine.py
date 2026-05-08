@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import HTTPException
-from openai import APIError, APITimeoutError, OpenAI, RateLimitError
+from openai import APITimeoutError, OpenAI, OpenAIError, RateLimitError
 
 from app.schemas import Example, GenerateResponse, Mode, Persona
 
@@ -256,8 +256,8 @@ def generate_response(
     except APITimeoutError:
         logger.warning("openai timeout")
         raise HTTPException(status_code=504, detail="LLM timeout")
-    except APIError:
-        logger.exception("openai api error")
+    except OpenAIError:
+        logger.exception("openai error")
         raise HTTPException(status_code=502, detail="LLM provider error")
 
     parsed = completion.choices[0].message.parsed

@@ -4,8 +4,9 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.schemas import GenerateRequest, GenerateResponse, Persona
 from app.services.persona_engine import generate_response, list_personas
@@ -16,6 +17,8 @@ logging.basicConfig(
     level=os.environ.get("PERSONA_PAD_LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
 
@@ -41,6 +44,31 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Method: unhandled_exception_handler
+    Objective: Catch any unhandled exception inside the user middleware chain so the
+               500 response goes back through CORSMiddleware. Without this, exceptions
+               escape to Starlette's outermost ServerErrorMiddleware which sits outside
+               CORSMiddleware, producing a bare 500 with no Access-Control-Allow-Origin
+               header. The browser then surfaces it as a CORS error and the real cause
+               is hidden.
+    Parameters:
+        request (Request): the inbound request being handled
+        exc (Exception): the unhandled exception raised by the route or downstream
+    Return:
+        JSONResponse: 500 with a generic detail; full traceback is logged server-side
+    """
+    logger.exception(
+        "unhandled exception in %s %s", request.method, request.url.path
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 
 @app.get("/")
