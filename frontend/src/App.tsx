@@ -5,7 +5,7 @@ import type { Mode, Persona } from "./api/types";
 import { ChatHeader } from "./components/ChatHeader";
 import { ChatThread } from "./components/ChatThread";
 import { MessageInput } from "./components/MessageInput";
-import { PhoneFrame } from "./components/PhoneFrame";
+import { Sidebar } from "./components/Sidebar";
 import type { ChatMessage } from "./types";
 
 function makeId(): string {
@@ -81,14 +81,22 @@ function App() {
     setError(null);
   }
 
+  const current = personas.find((p) => p.id === personaId);
   const emptyHint =
     personas.length === 0
       ? "Loading personas..."
-      : "Send a message to start the conversation.";
+      : current
+        ? `Send a message to start a conversation with ${current.display_name}.`
+        : "Send a message to start the conversation.";
 
   return (
     <main className="app">
-      <PhoneFrame>
+      <Sidebar
+        personas={personas}
+        personaId={personaId}
+        onPersonaChange={handlePersonaChange}
+      />
+      <section className="chat">
         <ChatHeader
           personas={personas}
           personaId={personaId}
@@ -106,7 +114,7 @@ function App() {
           onModeChange={setMode}
           disabled={pending || !personaId}
         />
-      </PhoneFrame>
+      </section>
     </main>
   );
 }

@@ -24,7 +24,9 @@ export function ChatHeader({ personas, personaId, onPersonaChange }: ChatHeaderP
       </div>
       <div className="chat-header__title">
         <div className="chat-header__name-row">
+          {/* Mobile: dropdown to switch personas. Desktop: sidebar handles it. */}
           <select
+            className="chat-header__select"
             aria-label="Persona"
             value={personaId}
             onChange={(e) => onPersonaChange(e.target.value)}
@@ -40,8 +42,11 @@ export function ChatHeader({ personas, personaId, onPersonaChange }: ChatHeaderP
               ))
             )}
           </select>
+          <span className="chat-header__name">{displayName}</span>
         </div>
-        <span className="chat-header__subtitle">PersonaPad · digital persona</span>
+        <span className="chat-header__subtitle">
+          Drafting replies in their voice
+        </span>
       </div>
     </header>
   );
