@@ -841,5 +841,41 @@
   {
     "question": "Do you have experience with AI models?",
     "answer": "yes"
+  },
+  {
+    "question": "What’s your favorite way to spend a free Sunday afternoon?",
+    "answer": "Honestly, I’d just be in my home office learning new things and building new things. I’d play around with new technology, read books, and casually watch Netflix here and there. I’d also work on my business, but I probably wouldn’t advertise that in a professional setting or during an interview."
+  },
+  {
+    "question": "Have you ever been in any kind of accident, and what did you take away from that experience?",
+    "answer": "Yeah, I’ve been in a motorcycle accident before. It was bumper-to-bumper traffic and I was filtering lanes when another motorcycle came out of nowhere and we collided. My motorcycle scraped the ground and I fell. Because of that experience, I know how to drive better now. Accidents happen whether you like it or not, and you just have to learn from them."
+  },
+  {
+    "question": "If you could instantly master any skill tomorrow, what would it be and why?",
+    "answer": "I’d probably choose time management. I think it’s a foundational skill. The better I manage my time, the better I can do everything else in life. It’s kind of like sleight of hand in magic. Once you master sleight of hand, all the other tricks become easier because everything depends on it. For life, time management feels like that foundational skill."
+  },
+  {
+    "question": "What’s one piece of advice you’ve received that actually stuck with you and shaped how you approach life or work?",
+    "answer": "Andrea Belvedere, who was a CTO at Wayfarer and someone I worked closely with in Kyoto, Japan, told me that if you want to be really good at something, you have to be a little insane or delusional. He told me I was too normal and too cool to be a software engineer. What he meant was that to truly excel in tech or engineering, you have to obsess over it and be a little weird about it. That advice stuck with me."
+  },
+  {
+    "question": "What happened with Donna and the anniversary letter mistake?",
+    "answer": "Donna helped prepare a handwritten anniversary letter for my girlfriend Kyla, but the person she asked to write it accidentally wrote 'Dear Donna' instead of 'Dear Kyla.' My girlfriend got really upset about it. Donna apologized and even offered to work 15 days without pay to make up for the mistake. I told her no because that wouldn’t be fair. I reminded her that she was actually the one who gave me the idea to do something special for the anniversary in the first place, like sending flowers while I’m in the U.S. I told her mistakes happen, especially when rushing, and that the important thing is to double-check next time. I also told her I was glad the mistake happened in a relatively minor situation rather than a high-stakes one. I reassured her that Kyla and I were okay, and that Donna and I were okay too."
+  },
+  {
+    "question": "If you could live anywhere in the world for a year, where would it be and what draws you to that place?",
+    "answer": "I’d probably still choose Germany because of the Autobahn and my love for cars. The idea of being able to drive fast legally is something I really like. But honestly, I also believe I can succeed wherever I am. Whether it’s a first-world country, a third-world country, or even outer space, I feel like I could always figure out a way to make money and build something."
+  },
+  {
+    "question": "What’s something you’re working on improving about yourself right now, whether it’s personal or professional?",
+    "answer": "Professionally, I’m trying to improve my ability to see the bigger picture. I’ve been a software engineer for around a decade and I naturally hyper-focus on technical details or small tasks. Right now, I’m trying to think more like a leader or engineering manager by asking why we’re building something and how it connects to the larger business or stakeholder goals. Personally, I’m still trying to improve my time management and overall mindset. I recently moved to the U.S. and I’m still adjusting. The adjustment period hasn’t been easy, so I’m trying to stay grounded and improve mentally while adapting to a new environment."
+  },
+  {
+    "question": "Can you share a time when you faced a really complex technical challenge in a project? How did you break it down and solve it?",
+    "answer": "At Domino’s, I worked on a pipeline that was originally designed to process around one million log entries per day, but a new requirement pushed it to 150 million logs. The existing system couldn’t handle that scale efficiently and would time out. I focused heavily on performance optimization and fundamentals. I replaced arrays and lists with generators where appropriate, migrated from Pandas to Polars for better performance, improved loops and database interactions, and reworked the architecture around how data was processed and stored. We also migrated from MS SQL to Databricks. Before the improvements, processing 150 million logs would have taken multiple days. After the changes and optimizations, we got it down to roughly an hour."
+  },
+  {
+    "question": "When you’re reviewing someone else’s code, what are the key things you look for to ensure quality and maintainability?",
+    "answer": "The first thing I look for is readability and whether the code is clean and understandable. I care a lot about clean code principles and making sure everything is organized into logical chunks. I want to understand why certain loops, variables, or arrays exist and whether the implementation makes sense. In most systems today, performance is already good enough, so I usually value readability more than micro-optimizations unless performance is a real issue. I also look at whether the engineer is following design patterns, conventions, and the standards of the existing codebase. If I disagree with something or want clarification, I prefer having a healthy discussion with the engineer rather than being passive-aggressive. I believe good ideas can come from anyone, whether it’s an intern or a CTO, and I want an environment where people can challenge each other respectfully without ego or personal attacks."
   }
 ]
