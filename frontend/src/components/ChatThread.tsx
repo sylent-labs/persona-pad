@@ -51,7 +51,7 @@ export function ChatThread({
               text={msg.text}
               tail={Boolean(isLastBubble)}
               lead={isLeadBubble}
-              label={msg.label ?? undefined}
+              label={msg.label ?? ""}
             />
             {showDelivered ? (
               <div className="chat-thread__delivered">Delivered</div>
