@@ -10,7 +10,12 @@ interface ChatThreadProps {
   emptyHint: string;
 }
 
-export function ChatThread({ messages, pending, error, emptyHint }: ChatThreadProps) {
+export function ChatThread({
+  messages,
+  pending,
+  error,
+  emptyHint,
+}: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,8 +36,7 @@ export function ChatThread({ messages, pending, error, emptyHint }: ChatThreadPr
         const prev = messages[idx - 1];
         const next = messages[idx + 1];
         const isLastBubble =
-          idx === messages.length - 1 ||
-          (next && next.role !== msg.role);
+          idx === messages.length - 1 || (next && next.role !== msg.role);
         const isLeadBubble = !prev || prev.role !== msg.role;
         const showDelivered =
           msg.role === "user" &&
@@ -47,6 +51,7 @@ export function ChatThread({ messages, pending, error, emptyHint }: ChatThreadPr
               text={msg.text}
               tail={Boolean(isLastBubble)}
               lead={isLeadBubble}
+              label={msg.label ?? undefined}
             />
             {showDelivered ? (
               <div className="chat-thread__delivered">Delivered</div>

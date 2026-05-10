@@ -8,6 +8,7 @@ interface BubbleProps {
   /** True when this bubble starts a new sender streak (controls top spacing). */
   lead?: boolean;
   variant?: "default" | "error";
+  label?: string;
 }
 
 export function Bubble({
@@ -16,6 +17,7 @@ export function Bubble({
   tail = false,
   lead = false,
   variant = "default",
+  label,
 }: BubbleProps) {
   const rowClass = [
     "bubble-row",
@@ -36,7 +38,10 @@ export function Bubble({
 
   return (
     <div className={rowClass}>
-      <div className={bubbleClass}>{text}</div>
+      <div className={bubbleClass}>
+        {label ? <span>{label}</span> : null}
+        {text}
+      </div>
     </div>
   );
 }
@@ -44,7 +49,10 @@ export function Bubble({
 export function TypingBubble() {
   return (
     <div className="bubble-row bubble-row--persona bubble-row--lead">
-      <div className="bubble bubble--persona bubble--tail bubble--typing" aria-label="typing">
+      <div
+        className="bubble bubble--persona bubble--tail bubble--typing"
+        aria-label="typing"
+      >
         <span />
         <span />
         <span />

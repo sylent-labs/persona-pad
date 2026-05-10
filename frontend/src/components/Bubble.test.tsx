@@ -5,7 +5,10 @@ import { Bubble, TypingBubble } from "./Bubble";
 
 describe("Bubble", () => {
   it("renders user bubble text and applies the user role class", () => {
-    const { container } = render(<Bubble role="user" text="hi there" tail />);
+    const { container } = render(
+      <Bubble role="user" text="hi there" tail label="option 1: " />,
+    );
+    expect(screen.getByText("option 1:")).toBeInTheDocument();
     expect(screen.getByText("hi there")).toBeInTheDocument();
     const bubble = container.querySelector(".bubble");
     expect(bubble?.className).toContain("bubble--user");
@@ -14,8 +17,9 @@ describe("Bubble", () => {
 
   it("renders persona bubble text and applies the persona role class", () => {
     const { container } = render(
-      <Bubble role="persona" text="yeah probably" />,
+      <Bubble role="persona" text="yeah probably" label="option 2: " />,
     );
+    expect(screen.getByText("option 2:")).toBeInTheDocument();
     expect(screen.getByText("yeah probably")).toBeInTheDocument();
     const bubble = container.querySelector(".bubble");
     expect(bubble?.className).toContain("bubble--persona");

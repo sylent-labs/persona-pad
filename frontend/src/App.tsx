@@ -60,9 +60,15 @@ function App() {
         id: makeId(),
         role: "persona",
         text: response.draft,
+        label: "option 1: ",
       };
       const alternateMsg: ChatMessage | null = response.alternate
-        ? { id: makeId(), role: "persona", text: response.alternate }
+        ? {
+            id: makeId(),
+            role: "persona",
+            text: response.alternate,
+            label: "option 2: ",
+          }
         : null;
 
       setMessages((prev) =>

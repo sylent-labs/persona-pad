@@ -26,8 +26,9 @@
   --sidebar-w: 280px;
   --content-max: 760px;
 
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
-    system-ui, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui,
+    sans-serif;
   color-scheme: dark;
 }
 
@@ -60,8 +61,16 @@ body {
   height: 100dvh;
   width: 100%;
   background:
-    radial-gradient(ellipse 60% 50% at 80% 0%, rgba(43, 138, 255, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(136, 66, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(
+      ellipse 60% 50% at 80% 0%,
+      rgba(43, 138, 255, 0.06) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 0% 100%,
+      rgba(136, 66, 255, 0.05) 0%,
+      transparent 60%
+    ),
     var(--page-bg);
 }
 
@@ -108,7 +117,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--accent-from) 0%, var(--accent-to) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--accent-from) 0%,
+      var(--accent-to) 100%
+    );
     color: white;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgba(10, 100, 255, 0.25);
@@ -570,7 +583,9 @@ body {
   border-radius: 22px;
   padding: 6px 8px 6px 14px;
   min-height: 36px;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .message-input__field:focus-within {
