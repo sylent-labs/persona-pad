@@ -1,0 +1,40 @@
+# Keep .git on purpose: git-crypt needs it to unlock backend/app/data/persona/**
+# at container start. Do NOT add `.git` to this file.
+
+# Frontend isn't part of the backend image
+frontend/
+
+# Local-only AI agent config and notes
+.claude/
+CLAUDE.md
+.cursor/
+
+# Python build artefacts
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.egg-info/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
+
+# Node/Vite (only relevant if frontend ever sneaks in)
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+**/*.tsbuildinfo
+
+# OS / editor noise
+**/.DS_Store
+**/Thumbs.db
+**/.idea/
+**/.vscode/
+**/*.swp
+
+# Local env files (real secrets ride in via Render env vars, not the image)
+**/.env
+**/.env.*
+!**/.env.example

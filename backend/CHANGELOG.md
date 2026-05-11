@@ -15,12 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plaintext in working copies that have run `git-crypt unlock`. The on-disk
   paths and `_load_style_profile` / `_load_examples` are unchanged, so
   `persona_engine` does not need to know about the encryption.
+- `backend/Dockerfile` (Python 3.11-slim base) installs `git-crypt`, copies
+  the repo, and installs `requirements.txt`. Build context is the repo root
+  so `.git` and the top-level `.gitattributes` are available for unlock.
+- `backend/docker-entrypoint.sh` runs at container start, base64-decodes
+  `GIT_CRYPT_KEY_B64` into a temp file, calls `git-crypt unlock`, scrubs the
+  key file, then `exec`s `uvicorn`. Skips the unlock if the repo is already
+  unlocked (defensive, for restarts inside the same writable layer).
+- `.dockerignore` at the repo root, scoped to keep `.git` (required for
+  unlock) while trimming `frontend/`, caches, and local-only env files out
+  of the build context.
 
 ### Changed
 
 - `.gitattributes` adds `backend/app/data/** filter=git-crypt diff=git-crypt`,
   scoping encryption to persona content only. Code, configs, tests, and the
   rest of the repo stay diffable in plaintext.
+- `render.yaml` switched from `runtime: python` to `runtime: docker` with
+  `dockerfilePath: ./backend/Dockerfile` and `dockerContext: .`. Render's
+  managed Python runtime can't `apt-get install git-crypt`, so a Dockerfile
+  is the only path that lets git-crypt unlock the persona files at boot.
+  `buildCommand`, `startCommand`, and `PYTHON_VERSION` were removed (now
+  controlled by the Dockerfile). New required env var `GIT_CRYPT_KEY_B64`
+  set via the Render dashboard with `sync: false`.
 
 ## [0.3.0] - 2026-05-08
 
