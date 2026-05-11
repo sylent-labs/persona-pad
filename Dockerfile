@@ -1,6 +1,7 @@
-# Build context for this Dockerfile is the repo root (see render.yaml ->
-# dockerContext: .) because git-crypt needs the .git directory and the
-# top-level .gitattributes to decrypt backend/app/data/persona/**.
+# Build context for this Dockerfile is the repo root because git-crypt needs
+# the .git directory and the top-level .gitattributes to decrypt
+# backend/app/data/persona/**. Keeping the Dockerfile at the repo root makes
+# the context unambiguous across Render/Docker UIs.
 
 FROM python:3.11-slim
 
@@ -23,11 +24,11 @@ RUN pip install -r /app/backend/requirements.txt
 
 COPY . /app
 
-RUN chmod +x /app/backend/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 WORKDIR /app/backend
 
 EXPOSE 8000
 
-ENTRYPOINT ["/app/backend/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

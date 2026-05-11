@@ -5,7 +5,7 @@ services:
     plan: free
     # Build context is the repo root so git-crypt can see .git and the
     # top-level .gitattributes when decrypting persona data at start.
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
     envVars:
