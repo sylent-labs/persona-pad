@@ -1,7 +1,11 @@
-# Build context for this Dockerfile is the repo root because git-crypt needs
-# the .git directory and the top-level .gitattributes to decrypt
-# backend/app/data/persona/**. Keeping the Dockerfile at the repo root makes
-# the context unambiguous across Render/Docker UIs.
+# Build context for this Dockerfile is the repo root. Render's Docker build
+# strips the .git directory out of the build context delivered to BuildKit
+# even though their clone step downloads the full repo, so we cannot rely on
+# the original .git surviving the COPY. git-crypt needs a git repo with the
+# encrypted blobs at HEAD to be able to decrypt, so the build below
+# reconstructs a minimal single-commit git repo over the copied files when
+# .git is absent. Local builds that already include .git skip this step and
+# use the real history.
 
 FROM python:3.11-slim
 
@@ -23,6 +27,22 @@ COPY backend/requirements.txt /app/backend/requirements.txt
 RUN pip install -r /app/backend/requirements.txt
 
 COPY . /app
+
+# If the build context didn't include .git (Render), synthesise a fresh repo
+# with the encrypted files as the only commit. The GITCRYPT magic header on
+# each encrypted blob is preserved by COPY, so when the runtime entrypoint
+# runs `git-crypt unlock`, git's smudge filter re-checks out HEAD and
+# decrypts those blobs in place. No clean filter is configured at add-time,
+# so git stores the encrypted bytes verbatim, which is exactly what
+# `git-crypt unlock` expects to find.
+RUN cd /app \
+    && if [ ! -d .git ]; then \
+         git init -q \
+         && git config user.email "build@persona-pad" \
+         && git config user.name "build" \
+         && git add -A \
+         && git commit -q -m "build snapshot"; \
+       fi
 
 RUN chmod +x /app/docker-entrypoint.sh
 
