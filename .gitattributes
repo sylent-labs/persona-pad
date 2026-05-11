@@ -1,0 +1,1 @@
+backend/app/data/** filter=git-crypt diff=git-crypt
