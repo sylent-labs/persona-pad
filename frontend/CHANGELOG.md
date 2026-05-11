@@ -5,6 +5,15 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-05-10
+
+### Changed
+- `frontend/.env.production` now points `VITE_API_BASE_URL` at
+  `https://persona-pad-backend-docker.onrender.com`, the new Dockerized
+  backend service on Render that supports `git-crypt unlock` at boot
+  (see backend `0.4.0`). The old `persona-pad-backend.onrender.com`
+  service is retired.
+
 ## [0.2.1] - 2026-05-09
 
 ### Added

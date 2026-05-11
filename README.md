@@ -20,7 +20,7 @@ LLM calls go to OpenAI through the Responses API with structured JSON output.
 
 Storage in the MVP is plain local files. No database.
 
-Frontend deploys to Vercel. Backend deploys later on Render, Railway, or Fly.
+Frontend deploys to Vercel. Backend deploys to Render as a Docker service so it can `git-crypt unlock` the encrypted persona data at container start.
 
 ## Local dev
 
