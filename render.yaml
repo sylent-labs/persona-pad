@@ -1,15 +1,21 @@
 services:
   - type: web
     name: persona-pad-backend
-    runtime: python
+    runtime: docker
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # Build context is the repo root so git-crypt can see .git and the
+    # top-level .gitattributes when decrypting persona data at start.
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
     healthCheckPath: /
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.9"
+      # Base64-encoded git-crypt symmetric key. Generate with:
+      #   git-crypt export-key /tmp/persona-pad.key
+      #   base64 < /tmp/persona-pad.key
+      # Paste the output as the value in the Render dashboard. sync: false
+      # keeps it out of this file.
+      - key: GIT_CRYPT_KEY_B64
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

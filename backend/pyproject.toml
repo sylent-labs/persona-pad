@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "persona-pad-backend"
-version = "0.3.0"
+version = "0.4.0"
 description = "FastAPI backend for PersonaPad"
 authors = ["Van Keith <itsvankeith@gmail.com>"]
 readme = "../README.md"
