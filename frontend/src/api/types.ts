@@ -37,4 +37,9 @@ export const MODES: ReadonlyArray<{
     label: "Short",
     hint: "Five sentences or fewer for quick replies and texts.",
   },
+  {
+    value: "email",
+    label: "Email",
+    hint: "Reply structured for email: greeting, body, sign-off.",
+  },
 ];

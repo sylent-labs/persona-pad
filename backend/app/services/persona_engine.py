@@ -74,6 +74,65 @@ _MODE_RULES: dict[Mode, str] = {
         "3. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
         "contrast structure."
     ),
+    "email": (
+        "Mode: email.\n"
+        "Voice. Same VK underneath: direct, senior engineer, no theater, quiet ego. "
+        "Van Keith writes like the role is auditioning for him, not the other way "
+        "around. He does not pitch himself with stacked adjectives, he states what he "
+        "has done in production and signs off. Email shape: greeting, body, sign off. "
+        "Proper sentence casing and punctuation. Cut filler. No profanity. The "
+        "substantive channel rules (when to greet by name, paragraphing, sign off "
+        "variants, subject handling, length targets, the no generic resume filler "
+        "list, the no redundancy rule, the brief 'what i do' overview block, the "
+        "'make it feel written for them' rules, and the preferred close) live in the "
+        "email.md block above; follow them.\n"
+        "Personalization. Each draft must read like it was written for the specific "
+        "recipient and listing in the question, not a template with the name swapped "
+        "in. When the role title, company name, or a specific phrase from the "
+        "recipient's message is available in the question, reference it explicitly "
+        "in the draft at least once. Never produce a draft that could be sent to "
+        "anyone else with only a name change. Generic stand ins like 'your team', "
+        "'your company', 'your role', or 'the role you posted' are only acceptable "
+        "when the actual name truly is not in the question.\n"
+        "What i do, brief overview. When a draft needs a short 'what i do' line, "
+        "pull one or two threads from the 'what i do, brief overview' block in "
+        "email.md that overlap with what the recipient asked about. Two short lines "
+        "max. Never paste the whole block. If the recipient never asked for a 'what "
+        "i do' line (scheduling reply, follow up, thread already in motion), do not "
+        "include one at all.\n"
+        "Hard bans. The output must never contain any of these:\n"
+        "1. an em dash, en dash, hyphen, or any other dash character anywhere, "
+        "including inside compound words, ranges, and salutations. Specifically, "
+        "'end-to-end' must always be written as 'end to end' as three separate words. "
+        "Same for 'full-time', 'part-time', 'back-end', 'front-end', and any other "
+        "compound the model is tempted to hyphenate.\n"
+        "2. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
+        "contrast structure.\n"
+        "3. email cliches: 'hope this finds you well', 'hope you are doing well', "
+        "'just checking in', 'just wanted to', 'kindly', 'per my previous email', "
+        "'as per', 'please find attached', 'circling back', 'touching base', "
+        "'gentle reminder', 'thanks in advance'.\n"
+        "4. generic resume filler: 'focused on delivering impactful solutions', "
+        "'delivering impactful solutions', 'delivering value', 'strong background', "
+        "'strong experience', 'extensive experience', 'deep experience', "
+        "'deep backend experience', 'proven track record', 'passionate about', "
+        "'results driven', 'leverage my [anything]', 'my capability to drive "
+        "[anything]', 'drive end to end software solutions'. When the impulse is to "
+        "qualify experience with 'strong / extensive / deep / vast / proven', use "
+        "'production experience' instead. No other modifier is allowed.\n"
+        "5. soft closes: 'I would be open to a call', 'I am open to a call', "
+        "'happy to chat', 'happy to connect', 'on the lookout for roles', "
+        "'if any upcoming or existing roles seem aligned', 'if this looks like a "
+        "fit', 'looking forward to hearing from you'. The close always puts the next "
+        "step on the recipient. Default to 'You have my resume and contact. Let's "
+        "set up a call. https://calendly.com/itsvankeith/30min' or a variant of the same shape.\n"
+        "6. redundancy. Each fact (role, stack, availability, location, work "
+        "authorization, contact details) appears once per email. If the opening "
+        "already stated his role and stack, do not restate the role and stack in a "
+        "later paragraph in different words. Cut the duplicate paragraph entirely. "
+        "Fewer lines is always better.\n"
+        "7. corporate filler from the profile's avoid list."
+    ),
 }
 
 
@@ -210,7 +269,7 @@ def _build_messages(
     Parameters:
         persona_id (str): Which persona's profile and examples to load
         question (str): The user's question
-        mode (Mode): raw, professional, or short
+        mode (Mode): raw, professional, short, or email
     Return:
         list[dict[str, str]]: messages in OpenAI chat completions shape
     """
@@ -221,8 +280,15 @@ def _build_messages(
     profile = _load_style_profile(persona_id)
     examples = select_examples(persona_id, question, _FEW_SHOT_MAX)
 
+    email_block = ""
+    if mode == "email":
+        email_profile = _load_email_profile(persona_id)
+        if email_profile is not None:
+            email_block = f"## Email channel rules\n{email_profile}\n\n"
+
     system_content = (
         f"{profile}\n\n"
+        f"{email_block}"
         f"## Mode for this draft\n{_MODE_RULES[mode]}\n\n"
         "## Output\n"
         "Return JSON matching the GenerateResponse schema with three fields:\n"
