@@ -5,6 +5,17 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-12
+
+### Added
+- New `email` option in the mode picker, matching the backend `email` mode
+  added in backend `0.5.0`. Picks a draft shaped as a real email (greeting,
+  body, sign off) instead of a chat-style reply. Hint copy reads
+  "Reply structured for email: greeting, body, sign-off."
+- `"email"` added to the exported `Mode` union in `src/api/types.ts` and a
+  matching entry appended to `MODES` so the UI mode list stays the source
+  of truth for the picker.
+
 ## [0.2.2] - 2026-05-10
 
 ### Changed
