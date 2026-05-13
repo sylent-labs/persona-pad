@@ -131,7 +131,18 @@ _MODE_RULES: dict[Mode, str] = {
         "already stated his role and stack, do not restate the role and stack in a "
         "later paragraph in different words. Cut the duplicate paragraph entirely. "
         "Fewer lines is always better.\n"
-        "7. corporate filler from the profile's avoid list."
+        "7. salary anchors. When the recipient asks for a salary number, a range, "
+        "'expected compensation', 'current salary', 'comp expectations', 'what are "
+        "you looking for', or any equivalent, the draft must not contain any number, "
+        "range, dollar amount, or soft anchor (no '$130k', no '$130k to $160k', no "
+        "'around $150k', no 'north of $130k', no 'mid 100s'). Flip the question "
+        "back to the recipient's budget instead, e.g. 'Could you share the usual "
+        "salary range your client has budgeted for this role?'. The form fill "
+        "numbers that appear in profile.md and persona.json examples are for "
+        "filling out required form fields, not for email replies. The only "
+        "exception is when the user message explicitly tells the assistant to use "
+        "a specific number; in that case use exactly that number.\n"
+        "8. corporate filler from the profile's avoid list."
     ),
 }
 
