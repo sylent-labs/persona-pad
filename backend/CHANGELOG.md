@@ -5,6 +5,46 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-12
+
+### Added
+
+- New `email` mode for `POST /api/generate`. Joins the existing `raw`,
+  `professional`, and `short` modes. Drafts come back shaped as an actual
+  email (greeting, body, sign off) with proper sentence casing, kept short
+  by default, and personalized to the role/company/recipient when those
+  details are in the question.
+- Per-persona `email.md` channel file under
+  `app/data/persona/<persona_id>/email.md`. When present and `mode="email"`,
+  it is injected into the system prompt under an `## Email channel rules`
+  section between `profile.md` and the mode block. Absent file is a no-op,
+  so personas without an email profile still work in email mode using just
+  the inline mode rules.
+- `_load_email_profile(persona_id)` in `app/services/persona_engine.py`,
+  cached with `lru_cache(maxsize=32)` like the other persona loaders.
+  Returns `None` when the persona has no `email.md`.
+- Seeded `backend/app/data/persona/van_keith/email.md` with the Van Keith
+  email channel rules (voice, length targets, greeting/sign-off rules,
+  banned phrases, reference emails, and the cold-outreach boilerplate).
+- Email-mode hard bans baked into `_MODE_RULES["email"]`: no dashes (incl.
+  inside compound words and ranges), no "not X, it is Y" contrast, no email
+  cliches (`hope this finds you well`, `just checking in`, `kindly`, etc.),
+  no generic resume filler (`strong / extensive / deep / proven` qualifiers,
+  `focused on delivering impactful solutions`, `passionate about`, etc.),
+  no soft closes (`I would be open to a call`, `happy to chat`, `looking
+  forward to hearing from you`), and a no-redundancy rule that prevents
+  repeating role/stack/availability across paragraphs.
+
+### Changed
+
+- `Mode` literal in `app/schemas.py` extended from
+  `Literal["raw", "professional", "short"]` to
+  `Literal["raw", "professional", "short", "email"]`. Existing clients that
+  only send the original three modes are unaffected.
+- `_build_messages` now conditionally prepends an `## Email channel rules`
+  block to the system prompt when `mode == "email"` and the persona has an
+  `email.md`. All other modes produce the same system prompt as before.
+
 ## [0.4.0] - 2026-05-10
 
 ### Added

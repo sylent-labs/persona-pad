@@ -1,4 +1,4 @@
-export type Mode = "raw" | "professional" | "short";
+export type Mode = "raw" | "professional" | "short" | "email";
 
 export interface Persona {
   id: string;
@@ -36,5 +36,10 @@ export const MODES: ReadonlyArray<{
     value: "short",
     label: "Short",
     hint: "Five sentences or fewer for quick replies and texts.",
+  },
+  {
+    value: "email",
+    label: "Email",
+    hint: "Reply structured for email: greeting, body, sign-off.",
   },
 ];

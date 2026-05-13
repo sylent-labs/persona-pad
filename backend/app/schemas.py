@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Mode = Literal["raw", "professional", "short"]
+Mode = Literal["raw", "professional", "short", "email"]
 
 
 class GenerateRequest(BaseModel):
