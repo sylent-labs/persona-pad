@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 _PERSONA_DIR = _DATA_DIR / "persona"
 _PROFILE_FILENAME = "profile.md"
+_EMAIL_PROFILE_FILENAME = "email.md"
 _PERSONA_FILENAME = "persona.json"
 _PERSONA_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
@@ -123,6 +124,22 @@ def _load_style_profile(persona_id: str) -> str:
         str: full markdown contents
     """
     return (_persona_path(persona_id) / _PROFILE_FILENAME).read_text(encoding="utf-8")
+
+
+@lru_cache(maxsize=32)
+def _load_email_profile(persona_id: str) -> str | None:
+    """
+    Method: _load_email_profile
+    Objective: Load <persona>/email.md once per persona and cache it; return None if absent
+    Parameters:
+        persona_id (str): The persona slug
+    Return:
+        str | None: full markdown contents, or None when the persona has no email.md
+    """
+    path = _persona_path(persona_id) / _EMAIL_PROFILE_FILENAME
+    if not path.is_file():
+        return None
+    return path.read_text(encoding="utf-8")
 
 
 @lru_cache(maxsize=32)
