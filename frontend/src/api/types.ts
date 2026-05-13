@@ -1,4 +1,4 @@
-export type Mode = "raw" | "professional" | "short";
+export type Mode = "raw" | "professional" | "short" | "email";
 
 export interface Persona {
   id: string;
