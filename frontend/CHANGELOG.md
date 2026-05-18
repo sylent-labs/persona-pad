@@ -5,6 +5,36 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-18
+
+### Added
+- Quick action shortcuts for the most common questions (tell me about
+  yourself, why are you leaving, what are you looking for, projects you're
+  leading, salary expectations). Selecting one immediately sends that
+  question as a user message, no typing required.
+- `src/quickActions.ts` holds the canonical list of quick actions
+  (`id`, `label`, `message`) so the sidebar and the mobile picker render
+  from a single source of truth.
+- New `QuickActionPicker` component renders a "Quick action…" dropdown in
+  the chat header. Shown on mobile only; on desktop the sidebar handles it.
+  Resets its value after each pick so the same action can be reused.
+- `Sidebar` now renders a "Quick Actions" section beneath the persona
+  list as plain buttons. Buttons disable when no persona is selected or a
+  request is already in flight, matching the picker's disabled state.
+
+### Changed
+- `App` wires `handleSend` to both the sidebar quick action buttons and
+  the chat-header picker, and derives a single `quickActionsDisabled`
+  flag from `pending || !personaId`.
+- Sidebar layout tweaked so the persona list and quick actions both fit
+  without the list eating all vertical space. Persona list is
+  `flex: 0 1 auto` with `min-height: 0`; quick action list is
+  `flex: 0 0 auto` with a `max-height: 280px` cap.
+- Chat header name row gets `min-width: 0` and the mobile persona select
+  is `flex: 0 1 auto` so the quick action picker sits to the right
+  without squashing the persona name. Subtitle truncates with ellipsis
+  when space is tight.
+
 ## [0.3.0] - 2026-05-12
 
 ### Added

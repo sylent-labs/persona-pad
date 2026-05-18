@@ -160,11 +160,17 @@ body {
   }
 
   .sidebar__list {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 2px;
     overflow-y: auto;
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .sidebar__list--quick {
+    flex: 0 0 auto;
+    max-height: 280px;
   }
 
   .sidebar__empty {
@@ -202,6 +208,22 @@ body {
 
   .sidebar__item--active:hover {
     background: var(--accent-soft);
+  }
+
+  .sidebar__item--quick {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    padding: 7px 12px;
+  }
+
+  .sidebar__item--quick:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .sidebar__item--quick:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .sidebar__avatar {
@@ -287,9 +309,9 @@ body {
 .chat-header__name-row {
   display: flex;
   align-items: center;
-  gap: 4px;
   font-size: 16px;
   font-weight: 600;
+  min-width: 0;
 }
 
 /* Mobile: select shown, static name hidden */
@@ -306,6 +328,8 @@ body {
   background-repeat: no-repeat;
   background-position: right center;
   max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -320,13 +344,34 @@ body {
   color: var(--text);
 }
 
+.chat-header__select--quick {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 4px 22px 4px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  background-color: var(--surface-2);
+  background-position: right 8px center;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  align-self: center;
+}
+
+.chat-header__select--quick:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .chat-header__name {
   display: none;
 }
 
-/* Desktop: static name shown, select hidden (sidebar handles switching) */
+/* Desktop: static name shown, selects hidden (sidebar handles switching) */
 @media (min-width: 900px) {
-  .chat-header__select {
+  .chat-header__select,
+  .chat-header__select--quick {
     display: none;
   }
 
@@ -339,6 +384,9 @@ body {
 .chat-header__subtitle {
   font-size: 11.5px;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* =====================================================================

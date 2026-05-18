@@ -1,9 +1,12 @@
 import type { Persona } from "../api/types";
+import { QuickActionPicker } from "./QuickActionPicker";
 
 interface ChatHeaderProps {
   personas: Persona[];
   personaId: string;
   onPersonaChange: (id: string) => void;
+  onQuickAction: (message: string) => void;
+  quickActionsDisabled: boolean;
 }
 
 function initials(displayName: string): string {
@@ -13,7 +16,13 @@ function initials(displayName: string): string {
   return (parts[0]!.charAt(0) + parts[parts.length - 1]!.charAt(0)).toUpperCase();
 }
 
-export function ChatHeader({ personas, personaId, onPersonaChange }: ChatHeaderProps) {
+export function ChatHeader({
+  personas,
+  personaId,
+  onPersonaChange,
+  onQuickAction,
+  quickActionsDisabled,
+}: ChatHeaderProps) {
   const current = personas.find((p) => p.id === personaId);
   const displayName = current?.display_name ?? "Loading...";
 
@@ -24,7 +33,7 @@ export function ChatHeader({ personas, personaId, onPersonaChange }: ChatHeaderP
       </div>
       <div className="chat-header__title">
         <div className="chat-header__name-row">
-          {/* Mobile: dropdown to switch personas. Desktop: sidebar handles it. */}
+          {/* Mobile: dropdown to switch persona. Desktop: sidebar handles it. */}
           <select
             className="chat-header__select"
             aria-label="Persona"
@@ -48,6 +57,10 @@ export function ChatHeader({ personas, personaId, onPersonaChange }: ChatHeaderP
           Drafting replies in their voice
         </span>
       </div>
+      <QuickActionPicker
+        onQuickAction={onQuickAction}
+        disabled={quickActionsDisabled}
+      />
     </header>
   );
 }

@@ -95,18 +95,24 @@ function App() {
         ? `Send a message to start a conversation with ${current.display_name}.`
         : "Send a message to start the conversation.";
 
+  const quickActionsDisabled = pending || !personaId;
+
   return (
     <main className="app">
       <Sidebar
         personas={personas}
         personaId={personaId}
         onPersonaChange={handlePersonaChange}
+        onQuickAction={handleSend}
+        quickActionsDisabled={quickActionsDisabled}
       />
       <section className="chat">
         <ChatHeader
           personas={personas}
           personaId={personaId}
           onPersonaChange={handlePersonaChange}
+          onQuickAction={handleSend}
+          quickActionsDisabled={quickActionsDisabled}
         />
         <ChatThread
           messages={messages}

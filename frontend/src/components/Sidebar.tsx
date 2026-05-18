@@ -1,9 +1,12 @@
 import type { Persona } from "../api/types";
+import { QUICK_ACTIONS } from "../quickActions";
 
 interface SidebarProps {
   personas: Persona[];
   personaId: string;
   onPersonaChange: (id: string) => void;
+  onQuickAction: (message: string) => void;
+  quickActionsDisabled: boolean;
 }
 
 function initials(displayName: string): string {
@@ -15,7 +18,13 @@ function initials(displayName: string): string {
   ).toUpperCase();
 }
 
-export function Sidebar({ personas, personaId, onPersonaChange }: SidebarProps) {
+export function Sidebar({
+  personas,
+  personaId,
+  onPersonaChange,
+  onQuickAction,
+  quickActionsDisabled,
+}: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="Personas">
       <div className="sidebar__brand">
@@ -56,6 +65,22 @@ export function Sidebar({ personas, personaId, onPersonaChange }: SidebarProps) 
             );
           })
         )}
+      </nav>
+
+      <div className="sidebar__section-label">Quick Actions</div>
+
+      <nav className="sidebar__list sidebar__list--quick" aria-label="Quick actions">
+        {QUICK_ACTIONS.map((action) => (
+          <button
+            key={action.id}
+            type="button"
+            className="sidebar__item sidebar__item--quick"
+            disabled={quickActionsDisabled}
+            onClick={() => onQuickAction(action.message)}
+          >
+            <span className="sidebar__item-name">{action.label}</span>
+          </button>
+        ))}
       </nav>
 
       <div className="sidebar__footer">
