@@ -45,7 +45,27 @@ describe("Sidebar", () => {
     const action = QUICK_ACTIONS[0]!;
     await user.click(screen.getByRole("button", { name: action.label }));
 
-    expect(onQuickAction).toHaveBeenCalledWith(action.message);
+    expect(onQuickAction).toHaveBeenCalledWith(action.message, action.mode);
+  });
+
+  it("passes the email mode for the Email template quick action", async () => {
+    const onQuickAction = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Sidebar
+        personas={personas}
+        personaId="van_keith"
+        onPersonaChange={vi.fn()}
+        onQuickAction={onQuickAction}
+        quickActionsDisabled={false}
+      />,
+    );
+
+    const emailAction = QUICK_ACTIONS.find((a) => a.id === "email-template");
+    expect(emailAction).toBeDefined();
+    await user.click(screen.getByRole("button", { name: emailAction!.label }));
+
+    expect(onQuickAction).toHaveBeenCalledWith(emailAction!.message, "email");
   });
 
   it("disables every quick action button when quickActionsDisabled is true", () => {

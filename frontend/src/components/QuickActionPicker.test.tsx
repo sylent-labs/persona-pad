@@ -17,7 +17,22 @@ describe("QuickActionPicker", () => {
       action.id,
     );
 
-    expect(onQuickAction).toHaveBeenCalledWith(action.message);
+    expect(onQuickAction).toHaveBeenCalledWith(action.message, action.mode);
+  });
+
+  it("passes the email mode when the Email template action is picked", async () => {
+    const onQuickAction = vi.fn();
+    const user = userEvent.setup();
+    render(<QuickActionPicker onQuickAction={onQuickAction} disabled={false} />);
+
+    const emailAction = QUICK_ACTIONS.find((a) => a.id === "email-template");
+    expect(emailAction).toBeDefined();
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /quick action/i }),
+      emailAction!.id,
+    );
+
+    expect(onQuickAction).toHaveBeenCalledWith(emailAction!.message, "email");
   });
 
   it("resets back to the placeholder after a selection so it can fire again", async () => {

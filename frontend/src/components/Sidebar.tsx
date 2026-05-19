@@ -1,11 +1,11 @@
-import type { Persona } from "../api/types";
+import type { Mode, Persona } from "../api/types";
 import { QUICK_ACTIONS } from "../quickActions";
 
 interface SidebarProps {
   personas: Persona[];
   personaId: string;
   onPersonaChange: (id: string) => void;
-  onQuickAction: (message: string) => void;
+  onQuickAction: (message: string, mode?: Mode) => void;
   quickActionsDisabled: boolean;
 }
 
@@ -76,7 +76,7 @@ export function Sidebar({
             type="button"
             className="sidebar__item sidebar__item--quick"
             disabled={quickActionsDisabled}
-            onClick={() => onQuickAction(action.message)}
+            onClick={() => onQuickAction(action.message, action.mode)}
           >
             <span className="sidebar__item-name">{action.label}</span>
           </button>

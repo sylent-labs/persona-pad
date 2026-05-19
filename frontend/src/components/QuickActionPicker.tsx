@@ -1,7 +1,8 @@
+import type { Mode } from "../api/types";
 import { QUICK_ACTIONS } from "../quickActions";
 
 interface QuickActionPickerProps {
-  onQuickAction: (message: string) => void;
+  onQuickAction: (message: string, mode?: Mode) => void;
   disabled: boolean;
 }
 
@@ -11,7 +12,7 @@ export function QuickActionPicker({ onQuickAction, disabled }: QuickActionPicker
     if (!id) return;
     const action = QUICK_ACTIONS.find((a) => a.id === id);
     event.target.value = "";
-    if (action) onQuickAction(action.message);
+    if (action) onQuickAction(action.message, action.mode);
   }
 
   return (

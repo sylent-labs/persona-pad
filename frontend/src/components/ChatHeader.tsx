@@ -1,11 +1,11 @@
-import type { Persona } from "../api/types";
+import type { Mode, Persona } from "../api/types";
 import { QuickActionPicker } from "./QuickActionPicker";
 
 interface ChatHeaderProps {
   personas: Persona[];
   personaId: string;
   onPersonaChange: (id: string) => void;
-  onQuickAction: (message: string) => void;
+  onQuickAction: (message: string, mode?: Mode) => void;
   quickActionsDisabled: boolean;
 }
 

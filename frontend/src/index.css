@@ -442,6 +442,8 @@ body {
 
 .bubble-row {
   display: flex;
+  align-items: flex-end;
+  gap: 4px;
   width: 100%;
   margin-top: 2px;
 }
@@ -456,6 +458,54 @@ body {
 
 .bubble-row--persona {
   justify-content: flex-start;
+}
+
+.bubble-copy {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.4;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.bubble-copy svg {
+  width: 14px;
+  height: 14px;
+}
+
+.bubble-copy:hover,
+.bubble-copy:focus-visible {
+  opacity: 1;
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+}
+
+.bubble-copy--copied,
+.bubble-copy--copied:hover,
+.bubble-copy--copied:focus-visible {
+  opacity: 1;
+  color: #34c759;
+  background: transparent;
+}
+
+@media (hover: none) {
+  .bubble-copy {
+    opacity: 0.55;
+  }
 }
 
 .bubble {

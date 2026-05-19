@@ -5,6 +5,34 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-18
+
+### Added
+- Copy button on every chat bubble. Renders as a small ghost icon button on
+  the inner side of the bubble (left of user messages, right of persona
+  messages), turns into a green check for ~1.5s after a successful copy.
+  Copies just the message text — the `option 1: ` / `option 2: ` label
+  prefix is stripped before writing to the clipboard. Error bubbles do not
+  get one. Falls back silently if `navigator.clipboard` is unavailable
+  (insecure context, etc.).
+- Two new email-mode quick actions, "Email availability" and "Email
+  template", with `message` values of `"Availability"` and `"Template"`.
+  Picking either one auto-switches the mode picker to `email` before
+  sending so the persona answers in email mode without the user having to
+  flip the toggle manually.
+- Optional `mode` field on `QuickAction` so each entry in
+  `src/quickActions.ts` can declare which mode it wants the draft
+  generated in. The sidebar and the mobile picker both forward it.
+
+### Changed
+- `App.handleSend` now accepts an optional `modeOverride: Mode` parameter.
+  When the override is provided and differs from the current mode, the
+  picker state is updated and the request goes out under the overridden
+  mode so the next reply matches what the user picked.
+- `QuickActionPicker`, `Sidebar`, and `ChatHeader` `onQuickAction`
+  signatures gained an optional `mode?: Mode` argument and pass it through
+  to `App` so quick actions that carry a mode reach the request layer.
+
 ## [0.4.0] - 2026-05-18
 
 ### Added

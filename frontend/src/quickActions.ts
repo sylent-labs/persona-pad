@@ -1,7 +1,10 @@
+import type { Mode } from "./api/types";
+
 export interface QuickAction {
   id: string;
   label: string;
   message: string;
+  mode?: Mode;
 }
 
 export const QUICK_ACTIONS: ReadonlyArray<QuickAction> = [
@@ -30,5 +33,17 @@ export const QUICK_ACTIONS: ReadonlyArray<QuickAction> = [
     id: "salary-expectations",
     label: "Salary expectations",
     message: "What are your salary expectations?",
+  },
+  {
+    id: "email-availability",
+    label: "Email availability",
+    message: "Availability",
+    mode: "email",
+  },
+  {
+    id: "email-template",
+    label: "Email template",
+    message: "Template",
+    mode: "email",
   },
 ];

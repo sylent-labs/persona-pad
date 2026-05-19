@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { Bubble, TypingBubble } from "./Bubble";
 
@@ -24,6 +25,51 @@ describe("Bubble", () => {
     const bubble = container.querySelector(".bubble");
     expect(bubble?.className).toContain("bubble--persona");
     expect(bubble?.className).not.toContain("bubble--tail");
+  });
+});
+
+describe("Bubble copy button", () => {
+  function installClipboardMock() {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    // userEvent.setup() v14 installs its own clipboard mock, so override it
+    // after setup runs.
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    return writeText;
+  }
+
+  it("copies only the text and leaves out the label prefix", async () => {
+    const user = userEvent.setup();
+    const writeText = installClipboardMock();
+    render(<Bubble role="persona" text="yeah probably" label="option 1: " />);
+
+    await user.click(screen.getByRole("button", { name: /copy message/i }));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith("yeah probably");
+  });
+
+  it("shows a copied affordance after a successful copy", async () => {
+    const user = userEvent.setup();
+    installClipboardMock();
+    render(<Bubble role="persona" text="hello" />);
+
+    await user.click(screen.getByRole("button", { name: /copy message/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /copied/i }),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("is not rendered for error bubbles", () => {
+    render(<Bubble role="persona" text="something blew up" variant="error" />);
+    expect(
+      screen.queryByRole("button", { name: /copy/i }),
+    ).not.toBeInTheDocument();
   });
 });
 

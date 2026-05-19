@@ -40,10 +40,14 @@ function App() {
     };
   }, []);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, modeOverride?: Mode) {
     if (!personaId) {
       setError("No persona selected");
       return;
+    }
+    const effectiveMode = modeOverride ?? mode;
+    if (modeOverride && modeOverride !== mode) {
+      setMode(modeOverride);
     }
     const userMsg: ChatMessage = { id: makeId(), role: "user", text };
     setMessages((prev) => [...prev, userMsg]);
@@ -54,7 +58,7 @@ function App() {
       const response = await generateDraft({
         persona_id: personaId,
         question: text,
-        mode,
+        mode: effectiveMode,
       });
       const draftMsg: ChatMessage = {
         id: makeId(),
