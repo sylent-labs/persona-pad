@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import type { Mode } from "../api/types";
 import { MODES } from "../api/types";
@@ -12,8 +12,18 @@ interface MessageInputProps {
 
 export function MessageInput({ onSend, mode, onModeChange, disabled }: MessageInputProps) {
   const [text, setText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const trimmed = text.trim();
   const sendDisabled = disabled || trimmed.length === 0;
+
+  // Auto-grow the textarea to fit its content. CSS max-height caps the height
+  // and switches to scrolling.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,6 +66,7 @@ export function MessageInput({ onSend, mode, onModeChange, disabled }: MessageIn
       <form className="message-input" onSubmit={handleSubmit}>
         <label className="message-input__field">
           <textarea
+            ref={textareaRef}
             aria-label="Message"
             placeholder="Message"
             rows={1}

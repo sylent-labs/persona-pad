@@ -5,6 +5,15 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-05-18
+
+### Changed
+- Message input textarea now auto-grows as the user types or pastes
+  multi-line content, up to the existing 160px cap, then scrolls. The
+  height is recalculated in a `useLayoutEffect` keyed on the text value
+  (reset to `auto`, then set to `scrollHeight`) so the field also shrinks
+  back when lines are deleted or after sending clears the input.
+
 ## [0.5.0] - 2026-05-18
 
 ### Added
