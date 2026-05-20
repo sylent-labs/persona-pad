@@ -5,6 +5,24 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-05-19
+
+### Added
+
+- Five new few-shot entries in `app/data/persona/van_keith/persona.json`:
+  short LinkedIn and GitHub Q&A pairs that return the URL plain, two
+  recruiter-email drafts (LinkedIn and GitHub) showing the exact greeting
+  + body + sign-off shape with plain-text URLs, and a meta entry
+  documenting the URL formatting rule so it can be retrieved as
+  semantic context.
+- Hard ban #9 in `_MODE_RULES["email"]` forbidding markdown formatting in
+  email drafts. URLs must be plain text exactly as given, with no markdown
+  link syntax (`[text](url)`), angle brackets (`<url>`), or bold/italic
+  wrapping. The body also stays free of `**bold**`, `*italic*`, code
+  fences, headings, and list markup. Was added after the model was
+  observed auto-linkifying LinkedIn URLs as `[https://…](https://…)`
+  inside email drafts.
+
 ## [0.5.0] - 2026-05-12
 
 ### Added

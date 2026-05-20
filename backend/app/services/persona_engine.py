@@ -142,7 +142,15 @@ _MODE_RULES: dict[Mode, str] = {
         "filling out required form fields, not for email replies. The only "
         "exception is when the user message explicitly tells the assistant to use "
         "a specific number; in that case use exactly that number.\n"
-        "8. corporate filler from the profile's avoid list."
+        "8. corporate filler from the profile's avoid list.\n"
+        "9. markdown formatting. Emails are plain text. URLs must be written "
+        "exactly as given, with no wrapping. Do not use markdown link syntax "
+        "like '[https://example.com](https://example.com)' or '[label](url)', "
+        "do not wrap URLs in angle brackets like '<https://example.com>', and "
+        "do not bold, italicize, code-fence, or otherwise decorate a URL. "
+        "Same for the rest of the body: no '**bold**', no '*italic*', no "
+        "'`code`', no headings, no bulleted or numbered list markup. If a "
+        "list is needed, write each item on its own line in prose."
     ),
 }
 
