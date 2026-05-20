@@ -1,5 +1,9 @@
 import type { Mode } from "../api/types";
-import { QUICK_ACTIONS } from "../quickActions";
+import {
+  QUICK_ACTIONS,
+  QUICK_ACTION_GROUP_LABELS,
+  QUICK_ACTION_GROUP_ORDER,
+} from "../quickActions";
 
 interface QuickActionPickerProps {
   onQuickAction: (message: string, mode?: Mode) => void;
@@ -26,11 +30,19 @@ export function QuickActionPicker({ onQuickAction, disabled }: QuickActionPicker
       <option value="" disabled>
         Quick action…
       </option>
-      {QUICK_ACTIONS.map((a) => (
-        <option key={a.id} value={a.id}>
-          {a.label}
-        </option>
-      ))}
+      {QUICK_ACTION_GROUP_ORDER.map((group) => {
+        const groupActions = QUICK_ACTIONS.filter((a) => a.group === group);
+        if (groupActions.length === 0) return null;
+        return (
+          <optgroup key={group} label={QUICK_ACTION_GROUP_LABELS[group]}>
+            {groupActions.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </optgroup>
+        );
+      })}
     </select>
   );
 }

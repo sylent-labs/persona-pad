@@ -5,6 +5,27 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-19
+
+### Added
+- Two new quick actions, "LinkedIn" and "GitHub", placed in the chat group
+  right above the email actions. Both send a short question so the persona
+  replies with the corresponding URL.
+- Section dividers in the quick action list. The sidebar now renders one
+  group per category with its own label ("Quick Actions — Chat" and
+  "Quick Actions — Email"), and the mobile dropdown mirrors the same
+  grouping via `<optgroup>` elements.
+- `group: "chat" | "email"` field on `QuickAction` in `src/quickActions.ts`,
+  plus exported `QUICK_ACTION_GROUP_LABELS` and `QUICK_ACTION_GROUP_ORDER`
+  so labels and order live in a single place.
+
+### Changed
+- `Sidebar` iterates over `QUICK_ACTION_GROUP_ORDER` and renders a labeled
+  `<nav>` per group instead of a single flat list, with each `aria-label`
+  set to the group name.
+- `QuickActionPicker` renders an `<optgroup label=…>` per group so the same
+  visual grouping shows up on small screens.
+
 ## [0.5.1] - 2026-05-18
 
 ### Changed

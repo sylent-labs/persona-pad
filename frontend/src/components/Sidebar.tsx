@@ -1,5 +1,9 @@
 import type { Mode, Persona } from "../api/types";
-import { QUICK_ACTIONS } from "../quickActions";
+import {
+  QUICK_ACTIONS,
+  QUICK_ACTION_GROUP_LABELS,
+  QUICK_ACTION_GROUP_ORDER,
+} from "../quickActions";
 
 interface SidebarProps {
   personas: Persona[];
@@ -67,21 +71,32 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="sidebar__section-label">Quick Actions</div>
-
-      <nav className="sidebar__list sidebar__list--quick" aria-label="Quick actions">
-        {QUICK_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            className="sidebar__item sidebar__item--quick"
-            disabled={quickActionsDisabled}
-            onClick={() => onQuickAction(action.message, action.mode)}
-          >
-            <span className="sidebar__item-name">{action.label}</span>
-          </button>
-        ))}
-      </nav>
+      {QUICK_ACTION_GROUP_ORDER.map((group) => {
+        const groupActions = QUICK_ACTIONS.filter((a) => a.group === group);
+        if (groupActions.length === 0) return null;
+        const groupLabel = QUICK_ACTION_GROUP_LABELS[group];
+        return (
+          <div key={group}>
+            <div className="sidebar__section-label">{groupLabel}</div>
+            <nav
+              className="sidebar__list sidebar__list--quick"
+              aria-label={groupLabel}
+            >
+              {groupActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className="sidebar__item sidebar__item--quick"
+                  disabled={quickActionsDisabled}
+                  onClick={() => onQuickAction(action.message, action.mode)}
+                >
+                  <span className="sidebar__item-name">{action.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        );
+      })}
 
       <div className="sidebar__footer">
         <span>Replies are drafts in their voice.</span>
