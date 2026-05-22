@@ -5,6 +5,18 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-05-21
+
+### Added
+
+- Recruiter authenticity guidance for email mode when a recipient asks why you
+  applied or what you liked about the company and role without sounding like
+  AI: new section in `van_keith/email.md`, matching rules in `profile.md`,
+  three few-shot entries in `persona.json` (including the Keepsafe / Christa
+  reference draft), and `_MODE_RULES["email"]` instructions plus extra hard
+  bans on cover-letter filler (`passionate about`, `thrilled to apply`,
+  `excited about the opportunity`, `your mission resonates`, and similar).
+
 ## [0.5.1] - 2026-05-19
 
 ### Added
