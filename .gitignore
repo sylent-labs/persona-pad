@@ -42,3 +42,5 @@ Thumbs.db
 
 .claude/
 CLAUDE.md
+.vercel
+.env*
