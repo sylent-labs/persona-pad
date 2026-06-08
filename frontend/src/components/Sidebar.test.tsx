@@ -6,8 +6,8 @@ import { Sidebar } from "./Sidebar";
 import { QUICK_ACTIONS } from "../quickActions";
 
 const personas = [
-  { id: "van_keith", display_name: "Van Keith" },
-  { id: "other", display_name: "Other Persona" },
+  { id: "van_keith", display_name: "Van Keith", default_mode: "raw" as const },
+  { id: "other", display_name: "Other Persona", default_mode: "raw" as const },
 ];
 
 describe("Sidebar", () => {

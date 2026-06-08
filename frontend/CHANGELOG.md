@@ -5,6 +5,17 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-08
+
+### Added
+
+- `default_mode` on the `Persona` type, matching the backend manifest field.
+
+### Changed
+
+- Mode dropdown defaults to each persona's `default_mode` on first load and when
+  switching personas.
+
 ## [0.6.0] - 2026-05-19
 
 ### Added

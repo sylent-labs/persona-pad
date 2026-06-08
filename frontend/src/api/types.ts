@@ -3,6 +3,7 @@ export type Mode = "raw" | "professional" | "short" | "email";
 export interface Persona {
   id: string;
   display_name: string;
+  default_mode: Mode;
 }
 
 export interface GenerateRequest {

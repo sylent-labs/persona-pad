@@ -29,6 +29,7 @@ function App() {
         const first = items[0];
         if (first) {
           setPersonaId((prev) => prev || first.id);
+          setMode(first.default_mode);
         }
       })
       .catch((e) => {
@@ -89,6 +90,10 @@ function App() {
     setPersonaId(nextId);
     setMessages([]);
     setError(null);
+    const next = personas.find((p) => p.id === nextId);
+    if (next) {
+      setMode(next.default_mode);
+    }
   }
 
   const current = personas.find((p) => p.id === personaId);
