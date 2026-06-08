@@ -10,6 +10,8 @@ Test coverage:
 - GET /api/personas returns the discovered personas
 - Unknown persona_id maps to HTTP 404
 - Every canonical rule survives prompt assembly in all 4 modes (dedup safety)
+- Every module axis (identity, lexicon, domains, bio) survives the axis split
+- The composed prompt carries the section scaffolding in all 4 modes
 - Live smoke test (skipped unless OPENAI_API_KEY is set)
 """
 
@@ -41,8 +43,9 @@ from app.services.persona_engine import (
 _DEFAULT_PERSONA_ID = "van_keith"
 _ALL_MODES = ("raw", "professional", "short", "email")
 
-# Each canonical rule must survive Phase 1 dedup and still appear in the
-# assembled system prompt for every mode. Needle is matched case-insensitively.
+# Each canonical rule must survive Phase 1 dedup and the Phase 2 axis split, and
+# still appear in the assembled system prompt for every mode. Needle is matched
+# case-insensitively.
 _CANONICAL_RULES: dict[str, str] = {
     "dash ban": "dash",
     "exclamation ban": "exclamation",
@@ -50,6 +53,36 @@ _CANONICAL_RULES: dict[str, str] = {
     "salary deflection": "budget",
     "do-not-invent-facts": "do not invent facts",
 }
+
+# Phase 2 is a pure restructure: the same content the old single profile.md fed
+# the model must still be present once it is sourced from split modules. These
+# needles sample each axis (identity, voice, lexicon, every domain, every bio
+# chunk) so a dropped or mis-listed module is caught for all four modes.
+_CONTENT_COVERAGE: dict[str, str] = {
+    "identity": "harvey specter",
+    "lexicon-avoid": "synergy",
+    "domain-business": "does the deal make sense",
+    "domain-engineering": "this pr is starting to carry too many concerns",
+    "domain-job-search": "recruiter authenticity",
+    "domain-car-sales": "best thing is to see the unit first",
+    "domain-sylent": "movement in silence",
+    "domain-relationship": "i need to feel like i’m actually being chosen",
+    "domain-assistant": "we need to up our game here",
+    "domain-negotiation": "the deal has to make sense on both sides",
+    "bio-background": "arizona state university",
+    "bio-projects": "signalforge",
+    "bio-challenges": "hide my email",
+    "bio-contact": "650-281-1984",
+    "bio-canonical-answers": "tell me about yourself",
+}
+
+# The composed system prompt must carry the new section scaffolding in every mode.
+_SECTION_HEADERS: tuple[str, ...] = (
+    "## Mode for this draft",
+    "## Situational voice",
+    "## Background and facts",
+    "## Output",
+)
 
 
 # ============================================================================
@@ -483,6 +516,7 @@ def test_list_personas_includes_van_keith(
     assert _DEFAULT_PERSONA_ID in ids, f"expected {_DEFAULT_PERSONA_ID} in {ids}"
     vk = next(p for p in items if p["id"] == _DEFAULT_PERSONA_ID)
     assert vk["display_name"] == "Van Keith", f"unexpected display_name: {vk!r}"
+    assert vk["default_mode"] == "raw", f"unexpected default_mode: {vk!r}"
 
 
 def test_personas_endpoint_returns_200_and_list(
@@ -549,6 +583,53 @@ def test_canonical_rules_survive_in_every_mode(
             assert needle in haystack, (
                 f"canonical rule {rule_name!r} (needle {needle!r}) missing from "
                 f"assembled {mode!r} prompt"
+            )
+
+
+def test_content_survives_axis_split_in_every_mode(
+    fixture_assemble_system_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_content_survives_axis_split_in_every_mode
+    Objective: Verify the Phase 2 axis split dropped no content; a needle from
+               every module axis (identity, lexicon, each domain, each bio chunk)
+               still appears in the assembled system prompt for all four modes
+    Parameters:
+        fixture_assemble_system_prompts (tuple): (success, prompts_by_mode, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_assemble_system_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    for mode, content in prompts.items():
+        haystack = content.lower()
+        for axis_name, needle in _CONTENT_COVERAGE.items():
+            assert needle.lower() in haystack, (
+                f"content {axis_name!r} (needle {needle!r}) missing from "
+                f"assembled {mode!r} prompt"
+            )
+
+
+def test_section_scaffolding_present_in_every_mode(
+    fixture_assemble_system_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_section_scaffolding_present_in_every_mode
+    Objective: Verify the composed prompt carries the channel/domains/bio/output
+               section headers in every mode, so the composition order is locked
+    Parameters:
+        fixture_assemble_system_prompts (tuple): (success, prompts_by_mode, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_assemble_system_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    for mode, content in prompts.items():
+        for header in _SECTION_HEADERS:
+            assert header in content, (
+                f"section header {header!r} missing from assembled {mode!r} prompt"
             )
 
 

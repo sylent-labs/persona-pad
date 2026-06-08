@@ -47,3 +47,21 @@ class Persona(BaseModel):
 
     id: str
     display_name: str
+    default_mode: Mode
+
+
+class PersonaManifest(BaseModel):
+    """
+    Class: PersonaManifest
+    Objective: The persona.json manifest. Declares metadata plus the module files
+               (relative to the persona directory) that compose the system prompt.
+               Content lives in the .md modules, never in this file.
+    """
+
+    id: str
+    display_name: str
+    default_mode: Mode
+    always: list[str]
+    domains: list[str]
+    bio: list[str]
+    channels: dict[Mode, str]

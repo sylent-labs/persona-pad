@@ -5,6 +5,36 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-08
+
+### Added
+
+- Axis-split persona pack layout for `van_keith`: always-loaded voice modules
+  (`identity.md`, `voice.md`, `lexicon.md`, `policies.md`), situational
+  `domains/`, factual `bio/`, per-mode `channels/`, and a separate
+  `examples.json` few-shot pool.
+- `PersonaManifest` schema and module loaders (`_load_manifest`, `_load_module`)
+  that compose the system prompt from manifest-declared files.
+- `default_mode` on `GET /api/personas` responses, read from each persona's
+  manifest.
+- Offline tests that every axis module and section header survives prompt
+  assembly in all four modes after the restructure.
+
+### Changed
+
+- Prompt assembly now composes always modules, the selected channel, all
+  domains, and all bio chunks from disk instead of monolithic `profile.md` and
+  inline `_MODE_RULES`.
+- `persona.json` is a manifest only (metadata plus module lists); few-shot
+  examples moved to `examples.json`.
+- `list_personas` validates declared modules at listing time and skips personas
+  with broken manifests or missing files.
+
+### Removed
+
+- Monolithic `van_keith/profile.md` and root-level `van_keith/email.md`
+  (content lives under the axis layout).
+
 ## [0.5.3] - 2026-06-08
 
 ### Added

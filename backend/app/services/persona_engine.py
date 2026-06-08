@@ -11,69 +11,40 @@ from pathlib import Path
 from fastapi import HTTPException
 from openai import APITimeoutError, OpenAI, OpenAIError, RateLimitError
 
-from app.schemas import Example, GenerateResponse, Mode, Persona
+from app.schemas import (
+    Example,
+    GenerateResponse,
+    Mode,
+    Persona,
+    PersonaManifest,
+)
 
 logger = logging.getLogger(__name__)
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 _PERSONA_DIR = _DATA_DIR / "persona"
-_PROFILE_FILENAME = "profile.md"
-_EMAIL_PROFILE_FILENAME = "email.md"
-_PERSONA_FILENAME = "persona.json"
+_MANIFEST_FILENAME = "persona.json"
+_EXAMPLES_FILENAME = "examples.json"
 _PERSONA_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 _MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 _FEW_SHOT_MAX = 24
 
-# The full voice, bans, and avoid lists live in profile.md (and, for email, in
-# email.md), which are always assembled into the system prompt ahead of these
-# mode rules. _MODE_RULES carries only the per-mode FORMAT delta plus one compact
-# reinforcement line for the three most-violated bans. It is not the home for any
-# rule; do not re-expand the enumerated ban lists here. See
-# .claude/plans/2026-06-08-persona-data-dedup-phase1.md.
+# The full voice, bans, and avoid lists live in the always-loaded modules
+# (identity.md, voice.md, lexicon.md, policies.md), which are assembled into the
+# system prompt ahead of the per-mode channel block. _BAN_REINFORCEMENT is one
+# compact reinforcement line for the three most-violated bans, appended after the
+# channel block for every mode. It is not the home for any rule; the complete ban
+# and avoid lists live in the modules. See
+# .claude/plans/2026-06-08-persona-data-restructure-phase2.md.
 _BAN_REINFORCEMENT = (
     "Reinforcement, the three most-violated bans, they override any writing habit: "
     "no exclamation points anywhere; no dash characters of any kind, including "
     "inside compound words and ranges, so write 'end to end', 'full time', and "
     "'monday to friday' as separate words; and never the 'it is not X, it is Y' or "
     "any 'not this, but that' contrast, just state the thing. The complete ban and "
-    "avoid lists are in the profile above; follow all of them."
+    "avoid lists are in the voice and lexicon rules above; follow all of them."
 )
-
-_MODE_RULES: dict[Mode, str] = {
-    "raw": (
-        "Mode: raw.\n"
-        "Format. Write entirely in lowercase. Periods and commas only when needed. "
-        "Short sentences are fine. No profanity unless the example pool already "
-        "shows it.\n"
-        f"{_BAN_REINFORCEMENT}"
-    ),
-    "professional": (
-        "Mode: professional.\n"
-        "Format. Same VK voice with clean sentence casing and proper punctuation. "
-        "Cut filler. No profanity. Suitable for a recruiter, client, or interview "
-        "reply.\n"
-        f"{_BAN_REINFORCEMENT}"
-    ),
-    "short": (
-        "Mode: short.\n"
-        "Format. Same raw lowercase voice, five sentences or fewer. Cut ruthlessly. "
-        "Suitable for DMs, Slack, and quick replies.\n"
-        f"{_BAN_REINFORCEMENT}"
-    ),
-    "email": (
-        "Mode: email.\n"
-        "Format. Defer to the email channel rules block above for greeting, opening "
-        "line, body shape, length, personalization, the 'what i do' overview, "
-        "redundancy, sign off, subject lines, casing, and the email-only cliche "
-        "bans. Proper sentence casing. Cut filler.\n"
-        "Plain text only. Emails are not markdown. Write URLs exactly as given with "
-        "no wrapping, no link syntax like '[label](url)', no angle brackets. No "
-        "bold, italic, code fences, headings, or list markup. If a list is needed, "
-        "put each item on its own line in prose.\n"
-        f"{_BAN_REINFORCEMENT}"
-    ),
-}
 
 
 _client: OpenAI | None = None
@@ -113,60 +84,72 @@ def _persona_path(persona_id: str) -> Path:
 
 
 @lru_cache(maxsize=32)
-def _load_style_profile(persona_id: str) -> str:
+def _load_manifest(persona_id: str) -> PersonaManifest:
     """
-    Method: _load_style_profile
-    Objective: Load <persona>/profile.md once per persona and cache it
+    Method: _load_manifest
+    Objective: Load and validate <persona>/persona.json (the manifest) once per persona
     Parameters:
         persona_id (str): The persona slug
     Return:
-        str: full markdown contents
+        PersonaManifest: validated manifest declaring metadata and module files
     """
-    return (_persona_path(persona_id) / _PROFILE_FILENAME).read_text(encoding="utf-8")
+    raw = json.loads(
+        (_persona_path(persona_id) / _MANIFEST_FILENAME).read_text(encoding="utf-8")
+    )
+    return PersonaManifest.model_validate(raw)
 
 
-@lru_cache(maxsize=32)
-def _load_email_profile(persona_id: str) -> str | None:
+@lru_cache(maxsize=256)
+def _load_module(persona_id: str, relpath: str) -> str:
     """
-    Method: _load_email_profile
-    Objective: Load <persona>/email.md once per persona and cache it; return None if absent
+    Method: _load_module
+    Objective: Load a single persona module file (relative to the persona dir) and cache it
     Parameters:
         persona_id (str): The persona slug
+        relpath (str): Module path relative to the persona directory, e.g. 'voice.md'
+                       or 'domains/engineering.md'
     Return:
-        str | None: full markdown contents, or None when the persona has no email.md
+        str: full markdown contents of the module
     """
-    path = _persona_path(persona_id) / _EMAIL_PROFILE_FILENAME
+    base = _persona_path(persona_id)
+    path = (base / relpath).resolve()
+    # Guard against path traversal in a manifest; modules must stay inside the persona dir.
+    if base.resolve() not in path.parents:
+        raise HTTPException(status_code=500, detail="invalid persona module path")
     if not path.is_file():
-        return None
+        raise HTTPException(
+            status_code=500, detail=f"persona module missing: {relpath}"
+        )
     return path.read_text(encoding="utf-8")
+
+
+def _join_modules(persona_id: str, relpaths: list[str]) -> str:
+    """
+    Method: _join_modules
+    Objective: Load each listed module and concatenate them with blank-line separators
+    Parameters:
+        persona_id (str): The persona slug
+        relpaths (list[str]): module paths relative to the persona directory
+    Return:
+        str: the modules' contents joined by a blank line, in listed order
+    """
+    return "\n\n".join(_load_module(persona_id, rel) for rel in relpaths)
 
 
 @lru_cache(maxsize=32)
 def _load_examples(persona_id: str) -> tuple[Example, ...]:
     """
     Method: _load_examples
-    Objective: Load <persona>/persona.json once per persona and cache it as immutable tuples
+    Objective: Load <persona>/examples.json once per persona and cache it as immutable tuples
     Parameters:
         persona_id (str): The persona slug
     Return:
         tuple[Example, ...]: parsed few-shot examples
     """
     raw = json.loads(
-        (_persona_path(persona_id) / _PERSONA_FILENAME).read_text(encoding="utf-8")
+        (_persona_path(persona_id) / _EXAMPLES_FILENAME).read_text(encoding="utf-8")
     )
     return tuple(Example.model_validate(item) for item in raw)
-
-
-def _to_display_name(persona_id: str) -> str:
-    """
-    Method: _to_display_name
-    Objective: Convert a persona_id slug like 'van_keith' to a human label like 'Van Keith'
-    Parameters:
-        persona_id (str): The persona slug
-    Return:
-        str: title-cased display name
-    """
-    return " ".join(part.capitalize() for part in persona_id.split("_") if part)
 
 
 def list_personas() -> list[Persona]:
@@ -176,8 +159,10 @@ def list_personas() -> list[Persona]:
     Parameters:
         None
     Return:
-        list[Persona]: sorted by id, one entry per directory containing both
-                       profile.md and persona.json
+        list[Persona]: sorted by id, one entry per directory with a valid manifest,
+                       an examples file, and every module the manifest declares present
+                       on disk. A persona with a broken manifest or a missing module is
+                       skipped rather than crashing the whole listing.
     """
     if not _PERSONA_DIR.is_dir():
         return []
@@ -188,14 +173,50 @@ def list_personas() -> list[Persona]:
             continue
         if not _PERSONA_ID_PATTERN.match(child.name):
             continue
-        if not (child / _PROFILE_FILENAME).is_file():
+        if not (child / _MANIFEST_FILENAME).is_file():
             continue
-        if not (child / _PERSONA_FILENAME).is_file():
+        if not (child / _EXAMPLES_FILENAME).is_file():
+            continue
+        try:
+            manifest = _load_manifest(child.name)
+            _validate_modules_present(child.name, manifest)
+        except Exception:
+            logger.exception("skipping persona with invalid manifest: %s", child.name)
             continue
         personas.append(
-            Persona(id=child.name, display_name=_to_display_name(child.name))
+            Persona(
+                id=manifest.id,
+                display_name=manifest.display_name,
+                default_mode=manifest.default_mode,
+            )
         )
     return personas
+
+
+def _validate_modules_present(persona_id: str, manifest: PersonaManifest) -> None:
+    """
+    Method: _validate_modules_present
+    Objective: Confirm every module the manifest declares exists on disk, so a broken
+               persona is caught at listing time instead of mid-generation
+    Parameters:
+        persona_id (str): The persona slug
+        manifest (PersonaManifest): the persona's parsed manifest
+    Return:
+        None
+    """
+    base = _persona_path(persona_id)
+    declared = [
+        *manifest.always,
+        *manifest.domains,
+        *manifest.bio,
+        *manifest.channels.values(),
+    ]
+    for relpath in declared:
+        if not (base / relpath).is_file():
+            raise HTTPException(
+                status_code=500,
+                detail=f"persona {persona_id} missing module: {relpath}",
+            )
 
 
 def _build_messages(
@@ -217,19 +238,23 @@ def _build_messages(
     # _load_examples from this module.
     from app.services.example_selector import select_examples
 
-    profile = _load_style_profile(persona_id)
+    manifest = _load_manifest(persona_id)
     examples = select_examples(persona_id, question, _FEW_SHOT_MAX)
 
-    email_block = ""
-    if mode == "email":
-        email_profile = _load_email_profile(persona_id)
-        if email_profile is not None:
-            email_block = f"## Email channel rules\n{email_profile}\n\n"
+    # Phase 2 composes from the axis layout but loads everything unconditionally:
+    # always modules, the selected channel, then ALL domains and ALL bio. This keeps
+    # the same coverage as the old single profile.md. Topic routing and relevance
+    # retrieval are deferred to Phase 4.
+    always_block = _join_modules(persona_id, manifest.always)
+    channel_block = _load_module(persona_id, manifest.channels[mode])
+    domains_block = _join_modules(persona_id, manifest.domains)
+    bio_block = _join_modules(persona_id, manifest.bio)
 
     system_content = (
-        f"{profile}\n\n"
-        f"{email_block}"
-        f"## Mode for this draft\n{_MODE_RULES[mode]}\n\n"
+        f"{always_block}\n\n"
+        f"## Mode for this draft\n{channel_block}\n\n{_BAN_REINFORCEMENT}\n\n"
+        f"## Situational voice\n{domains_block}\n\n"
+        f"## Background and facts\n{bio_block}\n\n"
         "## Output\n"
         "Return JSON matching the GenerateResponse schema with three fields:\n"
         "- draft: the primary persona-voice draft (the main one to send).\n"
