@@ -48,7 +48,11 @@ _MODE_RULES: dict[Mode, str] = {
         "3. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
         "contrast structure. Do not write 'it is not about the money, it is about respect' "
         "or 'it's not a bug, it's a feature'. Just say what it is, in one statement.\n"
-        "4. corporate filler from the profile's avoid list."
+        "4. corporate filler from the profile's avoid list.\n"
+        "5. meta citations. Never cite the persona pack, profile, documents, or "
+        "source material. Never write '(As per documents)', 'as per documents', "
+        "'according to my profile', 'based on the provided context', or similar. "
+        "State facts directly as Van Keith would know them."
     ),
     "professional": (
         "Mode: professional.\n"
@@ -60,7 +64,11 @@ _MODE_RULES: dict[Mode, str] = {
         "inside compound words and ranges.\n"
         "2. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
         "contrast structure.\n"
-        "3. corporate filler from the profile's avoid list."
+        "3. corporate filler from the profile's avoid list.\n"
+        "4. meta citations. Never cite the persona pack, profile, documents, or "
+        "source material. Never write '(As per documents)', 'as per documents', "
+        "'according to my profile', 'based on the provided context', or similar. "
+        "State facts directly as Van Keith would know them."
     ),
     "short": (
         "Mode: short.\n"
@@ -72,7 +80,11 @@ _MODE_RULES: dict[Mode, str] = {
         "2. an em dash, en dash, hyphen, or any other dash character anywhere, including "
         "inside compound words and ranges.\n"
         "3. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
-        "contrast structure."
+        "contrast structure.\n"
+        "4. meta citations. Never cite the persona pack, profile, documents, or "
+        "source material. Never write '(As per documents)', 'as per documents', "
+        "'according to my profile', 'based on the provided context', or similar. "
+        "State facts directly as Van Keith would know them."
     ),
     "email": (
         "Mode: email.\n"
@@ -138,7 +150,7 @@ _MODE_RULES: dict[Mode, str] = {
         "'if any upcoming or existing roles seem aligned', 'if this looks like a "
         "fit', 'looking forward to hearing from you'. The close always puts the next "
         "step on the recipient. Default to 'You have my resume and contact. Let's "
-        "set up a call. https://calendly.com/itsvankeith/30min' or a variant of the same shape.\n"
+        "set up a call. ' or a variant of the same shape.\n"
         "6. redundancy. Each fact (role, stack, availability, location, work "
         "authorization, contact details) appears once per email. If the opening "
         "already stated his role and stack, do not restate the role and stack in a "
@@ -163,7 +175,11 @@ _MODE_RULES: dict[Mode, str] = {
         "do not bold, italicize, code-fence, or otherwise decorate a URL. "
         "Same for the rest of the body: no '**bold**', no '*italic*', no "
         "'`code`', no headings, no bulleted or numbered list markup. If a "
-        "list is needed, write each item on its own line in prose."
+        "list is needed, write each item on its own line in prose.\n"
+        "10. meta citations. Never cite the persona pack, profile, documents, or "
+        "source material. Never write '(As per documents)', 'as per documents', "
+        "'according to my profile', 'based on the provided context', or similar. "
+        "State facts directly as Van Keith would know them."
     ),
 }
 
@@ -328,7 +344,11 @@ def _build_messages(
         "- alternate: a second take that says the same thing differently.\n"
         "- style_notes: 2 to 4 short bullet strings describing what choices you made.\n"
         "Do not invent facts. If the question requires information you do not have, "
-        "say what is missing in the draft itself."
+        "say what is missing in the draft itself.\n"
+        "Never cite the persona pack, profile, documents, or source material. "
+        "Never write '(As per documents)', 'as per documents', 'according to my "
+        "profile', 'based on the provided context', or similar meta commentary. "
+        "State facts directly as Van Keith would know them."
     )
 
     messages: list[dict[str, str]] = [{"role": "system", "content": system_content}]

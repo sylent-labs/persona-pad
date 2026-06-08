@@ -5,6 +5,31 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-06-08
+
+### Added
+
+- Canonical biographical facts in `van_keith/profile.md` and `persona.json`:
+  full legal name, first/last name split, no middle name, present location,
+  U.S. Green Card work authorization, and LinkedIn URL.
+
+### Changed
+
+- Email mode default close no longer appends a Calendly link in
+  `_MODE_RULES["email"]`; the close stays on resume and contact plus a call
+  setup ask.
+- Missing-info guidance in `email.md` no longer points at `profile.md` /
+  `persona.json` by filename, which was encouraging document citations in
+  drafts.
+
+### Fixed
+
+- Corrected wrong canonical last name (`Almazan` → `Keith`) and first name
+  (`Van Keith` → `Van`) in `persona.json`.
+- Banned `(As per documents)` and similar meta citations across all draft
+  modes in `persona_engine.py`, plus matching rules in `profile.md` and
+  `email.md`.
+
 ## [0.5.2] - 2026-05-21
 
 ### Added
