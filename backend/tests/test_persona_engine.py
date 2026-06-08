@@ -9,6 +9,7 @@ Test coverage:
 - list_personas discovers the on-disk persona directories
 - GET /api/personas returns the discovered personas
 - Unknown persona_id maps to HTTP 404
+- Every canonical rule survives prompt assembly in all 4 modes (dedup safety)
 - Live smoke test (skipped unless OPENAI_API_KEY is set)
 """
 
@@ -31,9 +32,24 @@ from openai import RateLimitError
 
 from app.main import app
 from app.schemas import GenerateRequest, GenerateResponse
-from app.services.persona_engine import generate_response, list_personas
+from app.services.persona_engine import (
+    _build_messages,
+    generate_response,
+    list_personas,
+)
 
 _DEFAULT_PERSONA_ID = "van_keith"
+_ALL_MODES = ("raw", "professional", "short", "email")
+
+# Each canonical rule must survive Phase 1 dedup and still appear in the
+# assembled system prompt for every mode. Needle is matched case-insensitively.
+_CANONICAL_RULES: dict[str, str] = {
+    "dash ban": "dash",
+    "exclamation ban": "exclamation",
+    "not-X-it-is-Y ban": "it is not x, it is y",
+    "salary deflection": "budget",
+    "do-not-invent-facts": "do not invent facts",
+}
 
 
 # ============================================================================
@@ -130,6 +146,19 @@ def fixture_unknown_persona_404() -> tuple[bool, int, str]:
         tuple[bool, int, str]: (error_raised, status_code, message)
     """
     return run_unknown_persona_404()
+
+
+@pytest.fixture
+def fixture_assemble_system_prompts() -> tuple[bool, dict[str, str], str]:
+    """
+    Method: fixture_assemble_system_prompts
+    Objective: Fixture assembling the system prompt for every mode (dedup safety)
+    Parameters:
+        None
+    Return:
+        tuple[bool, dict[str, str], str]: (success, prompts_by_mode, error)
+    """
+    return run_assemble_system_prompts()
 
 
 # ============================================================================
@@ -327,6 +356,33 @@ def run_unknown_persona_404() -> tuple[bool, int, str]:
         return False, 0, f"wrong error type: {e}"
 
 
+def run_assemble_system_prompts() -> tuple[bool, dict[str, str], str]:
+    """
+    Method: run_assemble_system_prompts
+    Objective: Build the system prompt for every mode with example selection
+               stubbed out, so the assembled prompt can be inspected offline
+    Parameters:
+        None
+    Return:
+        tuple[bool, dict[str, str], str]: (success, prompts_by_mode, error)
+    """
+    try:
+        # Stub the embedding-backed selector so no network call happens; the
+        # canonical rules live in profile.md / email.md / _MODE_RULES, not in
+        # the few-shot examples, so an empty pool is fine for this check.
+        with patch(
+            "app.services.example_selector.select_examples",
+            return_value=(),
+        ):
+            prompts: dict[str, str] = {}
+            for mode in _ALL_MODES:
+                messages = _build_messages(_DEFAULT_PERSONA_ID, "a test question", mode)
+                prompts[mode] = messages[0]["content"]
+        return True, prompts, ""
+    except Exception as e:
+        return False, {}, str(e)
+
+
 # ============================================================================
 # TESTS
 # ============================================================================
@@ -468,6 +524,34 @@ def test_unknown_persona_id_returns_404(
     assert "persona" in message.lower(), f"expected persona-not-found message, got: {message}"
 
 
+def test_canonical_rules_survive_in_every_mode(
+    fixture_assemble_system_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_canonical_rules_survive_in_every_mode
+    Objective: Verify Phase 1 dedup dropped no canonical rule; each one still
+               appears in the assembled system prompt for all four modes
+    Parameters:
+        fixture_assemble_system_prompts (tuple): (success, prompts_by_mode, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_assemble_system_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    assert set(prompts) == set(_ALL_MODES), (
+        f"expected all modes assembled, got: {sorted(prompts)}"
+    )
+
+    for mode, content in prompts.items():
+        haystack = content.lower()
+        for rule_name, needle in _CANONICAL_RULES.items():
+            assert needle in haystack, (
+                f"canonical rule {rule_name!r} (needle {needle!r}) missing from "
+                f"assembled {mode!r} prompt"
+            )
+
+
 @pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY"),
     reason="Live smoke requires OPENAI_API_KEY",
@@ -541,3 +625,18 @@ if __name__ == "__main__":
     error_raised, status_code, message = run_unknown_persona_404()
     print(f"Result: {'PASSED' if error_raised and status_code == 404 else 'FAILED'}")
     print(f"Status: {status_code}, message: {message}")
+
+    print("--------- TEST CANONICAL RULES SURVIVE IN EVERY MODE ----------")
+    success, prompts, error = run_assemble_system_prompts()
+    missing: list[str] = []
+    for mode, content in prompts.items():
+        haystack = content.lower()
+        for rule_name, needle in _CANONICAL_RULES.items():
+            if needle not in haystack:
+                missing.append(f"{mode}:{rule_name}")
+    ok = success and not missing
+    print(f"Result: {'PASSED' if ok else 'FAILED'}")
+    if error:
+        print(f"Error: {error}")
+    if missing:
+        print(f"Missing: {missing}")

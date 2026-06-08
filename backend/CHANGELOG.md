@@ -5,6 +5,24 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-06-08
+
+### Added
+
+- Canonical "resume filler and recruiter pitch phrases" avoid list in
+  `van_keith/profile.md`, shared by every channel including email.
+- Offline test that dash, exclamation, contrast, salary-deflection, and
+  do-not-invent-facts rules still appear in the assembled system prompt
+  for all four modes after dedup.
+
+### Changed
+
+- Deduplicated persona voice rules: `profile.md` and `email.md` are the
+  single source of truth; `email.md` defers to profile for shared bans
+  instead of restating them; `_MODE_RULES` carries only per-mode format
+  deltas plus a compact reinforcement line for the three most-violated
+  bans. Reduces contradictory instructions when rules are updated.
+
 ## [0.5.2] - 2026-05-21
 
 ### Added

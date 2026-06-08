@@ -36,7 +36,7 @@ def _parse_allowed_origins() -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-app = FastAPI(title="PersonaPad", version="0.5.2")
+app = FastAPI(title="PersonaPad", version="0.5.3")
 
 app.add_middleware(
     CORSMiddleware,
