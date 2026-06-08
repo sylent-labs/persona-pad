@@ -5,6 +5,19 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-06-08
+
+### Added
+
+- Deterministic post-processing on generated drafts: long dashes (em/en and
+  variants) are replaced with commas, and reflexive pleasantry openers (thanks
+  for reaching out, I hope you are well, I appreciate the update, and similar)
+  are stripped before the response is returned.
+- Cross-mode `no pleasantries` policy in `van_keith/policies.md` with expanded
+  banned-opener list in the email channel rules.
+- Offline tests covering dash normalization, pleasantry stripping, and
+  end-to-end output cleanup on mocked LLM responses.
+
 ## [0.6.0] - 2026-06-08
 
 ### Added

@@ -12,6 +12,8 @@ Test coverage:
 - Every canonical rule survives prompt assembly in all 4 modes (dedup safety)
 - Every module axis (identity, lexicon, domains, bio) survives the axis split
 - The composed prompt carries the section scaffolding in all 4 modes
+- Long dashes the model emits are stripped from draft and alternate
+- Pleasantry openers the model emits are stripped from draft and alternate
 - Live smoke test (skipped unless OPENAI_API_KEY is set)
 """
 
@@ -36,9 +38,13 @@ from app.main import app
 from app.schemas import GenerateRequest, GenerateResponse
 from app.services.persona_engine import (
     _build_messages,
+    _strip_long_dashes,
+    _strip_pleasantries,
     generate_response,
     list_personas,
 )
+
+_LONG_DASH_CHARS = "‐‑‒–—―−"
 
 _DEFAULT_PERSONA_ID = "van_keith"
 _ALL_MODES = ("raw", "professional", "short", "email")
@@ -179,6 +185,34 @@ def fixture_unknown_persona_404() -> tuple[bool, int, str]:
         tuple[bool, int, str]: (error_raised, status_code, message)
     """
     return run_unknown_persona_404()
+
+
+@pytest.fixture
+def fixture_dash_stripped_from_output() -> tuple[bool, GenerateResponse | None, str]:
+    """
+    Method: fixture_dash_stripped_from_output
+    Objective: Fixture asserting generate_response normalizes long dashes the model emits
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    return run_dash_stripped_from_output()
+
+
+@pytest.fixture
+def fixture_pleasantry_stripped_from_output() -> (
+    tuple[bool, GenerateResponse | None, str]
+):
+    """
+    Method: fixture_pleasantry_stripped_from_output
+    Objective: Fixture asserting generate_response strips pleasantry openers the model emits
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    return run_pleasantry_stripped_from_output()
 
 
 @pytest.fixture
@@ -387,6 +421,80 @@ def run_unknown_persona_404() -> tuple[bool, int, str]:
         return True, e.status_code, str(e.detail)
     except Exception as e:
         return False, 0, f"wrong error type: {e}"
+
+
+def run_dash_stripped_from_output() -> tuple[bool, GenerateResponse | None, str]:
+    """
+    Method: run_dash_stripped_from_output
+    Objective: Mock the LLM into returning an em dash and confirm generate_response
+               strips it before returning, in both draft and alternate
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    dashed = "keep me in mind if something opens up — i'd be interested."
+    try:
+        with patch("app.services.persona_engine._get_client") as mock_get_client:
+            client = MagicMock()
+            completion = MagicMock()
+            completion.choices = [MagicMock()]
+            completion.choices[0].message = MagicMock()
+            completion.choices[0].message.parsed = GenerateResponse(
+                draft=dashed,
+                alternate="something more aligned – let's talk.",
+                style_notes=["direct"],
+            )
+            client.chat.completions.parse.return_value = completion
+            mock_get_client.return_value = client
+
+            response = generate_response(
+                persona_id=_DEFAULT_PERSONA_ID,
+                question="any update?",
+                mode="email",
+            )
+            return True, response, ""
+    except Exception as e:
+        return False, None, str(e)
+
+
+def run_pleasantry_stripped_from_output() -> tuple[bool, GenerateResponse | None, str]:
+    """
+    Method: run_pleasantry_stripped_from_output
+    Objective: Mock the LLM into returning pleasantry openers and confirm
+               generate_response strips them from draft and alternate
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    draft = (
+        "Hi Team,\n\nThanks for letting me know. I appreciate the update and the "
+        "opportunity to apply. Keep me in mind if something opens up.\n\nRegards,\nVan Keith"
+    )
+    alternate = "I hope you are doing well. Friday at 3 works."
+    try:
+        with patch("app.services.persona_engine._get_client") as mock_get_client:
+            client = MagicMock()
+            completion = MagicMock()
+            completion.choices = [MagicMock()]
+            completion.choices[0].message = MagicMock()
+            completion.choices[0].message.parsed = GenerateResponse(
+                draft=draft,
+                alternate=alternate,
+                style_notes=["direct"],
+            )
+            client.chat.completions.parse.return_value = completion
+            mock_get_client.return_value = client
+
+            response = generate_response(
+                persona_id=_DEFAULT_PERSONA_ID,
+                question="any update?",
+                mode="email",
+            )
+            return True, response, ""
+    except Exception as e:
+        return False, None, str(e)
 
 
 def run_assemble_system_prompts() -> tuple[bool, dict[str, str], str]:
@@ -633,6 +741,128 @@ def test_section_scaffolding_present_in_every_mode(
             )
 
 
+def test_strip_long_dashes_normalizes_all_variants() -> None:
+    """
+    Method: test_strip_long_dashes_normalizes_all_variants
+    Objective: Verify _strip_long_dashes removes every long-dash variant and that a
+               spaced clause dash becomes a comma, while ASCII hyphens are untouched
+    Parameters:
+        None
+    Return:
+        None
+    """
+    cleaned = _strip_long_dashes("opens up — i'd be interested")
+    assert "—" not in cleaned, f"em dash survived: {cleaned!r}"
+    assert cleaned == "opens up, i'd be interested", f"unexpected: {cleaned!r}"
+
+    for dash in _LONG_DASH_CHARS:
+        out = _strip_long_dashes(f"a {dash} b")
+        assert not any(d in out for d in _LONG_DASH_CHARS), (
+            f"dash {dash!r} survived: {out!r}"
+        )
+
+    # ASCII hyphen is left alone: it is needed inside URLs (email mode is verbatim).
+    url = "see https://python.plainenglish.io/system-design-for-python-abc"
+    assert _strip_long_dashes(url) == url, "ASCII hyphen in URL must be preserved"
+
+
+def test_dash_stripped_from_generated_output(
+    fixture_dash_stripped_from_output: tuple[bool, GenerateResponse | None, str],
+) -> None:
+    """
+    Method: test_dash_stripped_from_generated_output
+    Objective: Verify generate_response strips long dashes from draft and alternate
+               even when the model emits them
+    Parameters:
+        fixture_dash_stripped_from_output (tuple): (success, response, error)
+    Return:
+        None
+    """
+    success, response, error = fixture_dash_stripped_from_output
+
+    assert success, f"generation failed: {error}"
+    assert response is not None, "response should not be None"
+    assert not any(d in response.draft for d in _LONG_DASH_CHARS), (
+        f"long dash survived in draft: {response.draft!r}"
+    )
+    assert not any(d in response.alternate for d in _LONG_DASH_CHARS), (
+        f"long dash survived in alternate: {response.alternate!r}"
+    )
+
+
+def test_strip_pleasantries_removes_filler_keeps_content() -> None:
+    """
+    Method: test_strip_pleasantries_removes_filler_keeps_content
+    Objective: Verify _strip_pleasantries removes pleasantry openers but keeps the
+               real content after them, and never touches the allowed cases
+    Parameters:
+        None
+    Return:
+        None
+    """
+    # Pleasantry opener removed, trailing content kept.
+    assert (
+        _strip_pleasantries("Thanks for the heads up, I'll take a look.")
+        == "I'll take a look."
+    ), "trailing content must survive a removed opener"
+    assert (
+        _strip_pleasantries("I hope you are doing well. Friday at 3 works.")
+        == "Friday at 3 works."
+    ), "hope-you-are-well opener must be removed"
+    assert (
+        _strip_pleasantries(
+            "Thanks for letting me know. I appreciate the update. Keep me in mind."
+        )
+        == "Keep me in mind."
+    ), "stacked pleasantry openers must all be removed"
+
+    # Allowed cases left untouched.
+    assert (
+        _strip_pleasantries("I would just appreciate at least one day's notice.")
+        == "I would just appreciate at least one day's notice."
+    ), "a non-pleasantry 'appreciate' must be preserved"
+    assert (
+        _strip_pleasantries("thank you. merging this now.")
+        == "thank you. merging this now."
+    ), "a concrete bare thank-you must be preserved"
+    assert (
+        _strip_pleasantries("Thanks,\nVan Keith") == "Thanks,\nVan Keith"
+    ), "the Thanks sign-off must be preserved"
+
+
+def test_pleasantry_stripped_from_generated_output(
+    fixture_pleasantry_stripped_from_output: tuple[bool, GenerateResponse | None, str],
+) -> None:
+    """
+    Method: test_pleasantry_stripped_from_generated_output
+    Objective: Verify generate_response strips pleasantry openers from draft and
+               alternate even when the model emits them, keeping greeting and content
+    Parameters:
+        fixture_pleasantry_stripped_from_output (tuple): (success, response, error)
+    Return:
+        None
+    """
+    success, response, error = fixture_pleasantry_stripped_from_output
+
+    assert success, f"generation failed: {error}"
+    assert response is not None, "response should not be None"
+
+    draft = response.draft.lower()
+    for needle in ("thanks for letting me know", "i appreciate the update", "i hope you"):
+        assert needle not in draft, f"pleasantry {needle!r} survived: {response.draft!r}"
+    assert "i hope you" not in response.alternate.lower(), (
+        f"pleasantry survived in alternate: {response.alternate!r}"
+    )
+    # Real content and structure survive.
+    assert "keep me in mind" in draft, f"content dropped: {response.draft!r}"
+    assert response.draft.startswith("Hi Team,"), (
+        f"greeting must survive: {response.draft!r}"
+    )
+    assert "friday at 3 works" in response.alternate.lower(), (
+        f"content dropped from alternate: {response.alternate!r}"
+    )
+
+
 @pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY"),
     reason="Live smoke requires OPENAI_API_KEY",
@@ -706,6 +936,31 @@ if __name__ == "__main__":
     error_raised, status_code, message = run_unknown_persona_404()
     print(f"Result: {'PASSED' if error_raised and status_code == 404 else 'FAILED'}")
     print(f"Status: {status_code}, message: {message}")
+
+    print("--------- TEST DASH STRIPPED FROM OUTPUT ----------")
+    success, response, error = run_dash_stripped_from_output()
+    ok = success and response is not None and not any(
+        d in response.draft for d in _LONG_DASH_CHARS
+    )
+    print(f"Result: {'PASSED' if ok else 'FAILED'}")
+    if response:
+        print(f"Draft: {response.draft!r}")
+    if error:
+        print(f"Error: {error}")
+
+    print("--------- TEST PLEASANTRY STRIPPED FROM OUTPUT ----------")
+    success, response, error = run_pleasantry_stripped_from_output()
+    ok = (
+        success
+        and response is not None
+        and "thanks for letting me know" not in response.draft.lower()
+        and "keep me in mind" in response.draft.lower()
+    )
+    print(f"Result: {'PASSED' if ok else 'FAILED'}")
+    if response:
+        print(f"Draft: {response.draft!r}")
+    if error:
+        print(f"Error: {error}")
 
     print("--------- TEST CANONICAL RULES SURVIVE IN EVERY MODE ----------")
     success, prompts, error = run_assemble_system_prompts()

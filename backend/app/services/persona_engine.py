@@ -274,6 +274,96 @@ def _build_messages(
     return messages
 
 
+# Long-dash characters that must never appear in VK output. The ASCII hyphen-minus
+# (U+002D) is intentionally excluded: it is the character used inside URLs, which
+# email mode must reproduce verbatim, and hyphen compounds are handled by the
+# prompt. None of these long dashes ever appears in a URL, so normalizing them
+# deterministically is safe and guarantees the single most-violated ban (no dashes)
+# instead of trusting the model to honor it every time.
+_LONG_DASHES = "‐‑‒–—―−"
+_SPACED_LONG_DASH = re.compile(rf"\s*[{_LONG_DASHES}]\s*")
+
+
+def _strip_long_dashes(text: str) -> str:
+    """
+    Method: _strip_long_dashes
+    Objective: Replace em/en/other long-dash characters with VK-legal punctuation so
+               a dash never survives into a draft, regardless of model adherence
+    Parameters:
+        text (str): a generated draft or alternate
+    Return:
+        str: the text with every long dash turned into a comma (clause separator),
+             with comma and whitespace artifacts from the substitution tidied up
+    """
+    # A long dash in prose almost always joins two clauses; a comma keeps VK's
+    # settled, declarative cadence without inventing sentence breaks.
+    text = _SPACED_LONG_DASH.sub(", ", text)
+    text = re.sub(r" {2,}", " ", text)
+    text = re.sub(r",\s*,", ", ", text)
+    text = re.sub(r"\s+,", ",", text)
+    return text
+
+
+# Pleasantry openers VK never uses. Each pattern is BOUNDED to a known polite
+# object (reaching out, letting me know, hope you are well, ...) and a lazy run up
+# to the first sentence punctuation, so only the filler clause is removed and any
+# real content that follows it survives. This is deliberately conservative: the
+# bare "Thanks," sign-off and a concrete thank ("thank you. merging this now.") do
+# not match, and "I would just appreciate ..." does not match the appreciate rule.
+_PLEASANTRY_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"thank(?:s| you)(?: so much| very much| again)? for "
+        r"(?:reaching out|getting (?:back to me|in touch)|letting me know|"
+        r"the (?:update|note|message|heads up|reply|response|info|information|"
+        r"details|opportunity|consideration)|"
+        r"your (?:time|reply|response|message|note|email|consideration|interest))"
+        r"[^.!?\n]*?[.,!?]\s*",
+        r"i (?:really |truly )?appreciate "
+        r"(?:the (?:update|note|reply|response|opportunity|info|information|"
+        r"details|message|consideration)|"
+        r"you(?:r)? (?:reaching out|getting back to me|update|time|reply|response|"
+        r"message|consideration|interest))"
+        r"[^.!?\n]*?[.,!?]\s*",
+        r"i hope (?:this (?:email|message|note) finds you well|"
+        r"you(?:'re| are)?(?: doing)? well|all is well|things are going well|"
+        r"your (?:week|day) is going well)"
+        r"[^.!?\n]*?[.!?]\s*",
+        r"hope (?:you(?:'re| are)?(?: doing)? well|all is well|this finds you well)"
+        r"[^.!?\n]*?[.!?]\s*",
+        r"thanks so much[^.!?\n]*?[.!?]\s*",
+        r"(?:it was|it's|it is) (?:great|good|nice|a pleasure) "
+        r"(?:to hear|hearing|to connect|connecting|to meet|meeting)"
+        r"[^.!?\n]*?[.!?]\s*",
+        r"(?:great|good|nice) to hear from you[^.!?\n]*?[.!?]\s*",
+        r"how (?:are|have) you(?: doing| been)?[^.!?\n]*?\?\s*",
+    )
+)
+
+
+def _strip_pleasantries(text: str) -> str:
+    """
+    Method: _strip_pleasantries
+    Objective: Remove pleasantry opener clauses (thanks for reaching out, I hope you
+               are well, I appreciate the update, ...) from a draft so social filler
+               never survives, regardless of model adherence
+    Parameters:
+        text (str): a generated draft or alternate
+    Return:
+        str: the text with pleasantry clauses removed and the whitespace artifacts
+             (leading spaces, doubled blank lines) left by the removal tidied up
+    """
+    for pattern in _PLEASANTRY_PATTERNS:
+        text = pattern.sub("", text)
+    # Tidy the gaps a removed opener leaves behind, without collapsing the
+    # greeting/body/sign-off paragraph breaks.
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"[ \t]+\n", "\n", text)
+    text = re.sub(r"\n[ \t]+", "\n", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.lstrip(" \t")
+
+
 def generate_response(
     persona_id: str,
     question: str,
@@ -312,6 +402,12 @@ def generate_response(
     if parsed is None:
         logger.error("openai returned no parsed content")
         raise HTTPException(status_code=502, detail="LLM returned malformed response")
+
+    # Deterministic guarantees for the two bans the model violates most: dashes and
+    # pleasantry openers. The prompt forbids both; the output is normalized too so a
+    # slip never reaches the user.
+    parsed.draft = _strip_pleasantries(_strip_long_dashes(parsed.draft))
+    parsed.alternate = _strip_pleasantries(_strip_long_dashes(parsed.alternate))
 
     elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
     logger.info(
