@@ -38,8 +38,8 @@ export function Sidebar({
           </svg>
         </div>
         <div className="sidebar__brand-text">
-          <span className="sidebar__brand-name">PersonaPad</span>
-          <span className="sidebar__brand-tag">Private digital personas</span>
+          <span className="sidebar__brand-name">Van Keith Intelligence</span>
+          <span className="sidebar__brand-tag">Everything Van Keith knows</span>
         </div>
       </div>
 

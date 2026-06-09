@@ -5,6 +5,14 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-08
+
+### Changed
+- Rebrand visible UI copy from PersonaPad to Van Keith Intelligence
+  (page title, sidebar name, tagline "Everything Van Keith knows").
+- Swap the CSS color tokens in `index.css` to the VKI / Colors palette
+  (purple accent, darker surfaces, solid borders). Layout rules unchanged.
+
 ## [0.6.0] - 2026-05-19
 
 ### Added
