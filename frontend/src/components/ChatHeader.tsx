@@ -1,66 +1,72 @@
-import type { Mode, Persona } from "../api/types";
-import { QuickActionPicker } from "./QuickActionPicker";
+import type { QuickAction } from "../quickActions";
+import { BrandMark } from "./BrandMark";
+import { QuickActionGroups } from "./QuickActionGroups";
 
 interface ChatHeaderProps {
-  personas: Persona[];
-  personaId: string;
-  onPersonaChange: (id: string) => void;
-  onQuickAction: (message: string, mode?: Mode) => void;
+  drawerOpen: boolean;
+  onToggleDrawer: () => void;
+  onQuickAction: (action: QuickAction) => void;
+  activeActionId: string | null;
   quickActionsDisabled: boolean;
 }
 
-function initials(displayName: string): string {
-  const parts = displayName.split(" ").filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0]!.charAt(0).toUpperCase();
-  return (parts[0]!.charAt(0) + parts[parts.length - 1]!.charAt(0)).toUpperCase();
-}
-
+/**
+ * Mobile-only top bar (desktop has no top bar — decision A2 layout). Left: a
+ * hamburger that opens the Quick Actions drawer. Center: the "VK Van Keith"
+ * badge (no chevron, no switcher).
+ */
 export function ChatHeader({
-  personas,
-  personaId,
-  onPersonaChange,
+  drawerOpen,
+  onToggleDrawer,
   onQuickAction,
+  activeActionId,
   quickActionsDisabled,
 }: ChatHeaderProps) {
-  const current = personas.find((p) => p.id === personaId);
-  const displayName = current?.display_name ?? "Loading...";
-
   return (
-    <header className="chat-header">
-      <div className="chat-header__avatar" aria-hidden="true">
-        {current ? initials(displayName) : "·"}
+    <header className="mobile-header">
+      <button
+        type="button"
+        className="mobile-header__menu"
+        aria-label="Quick actions"
+        aria-expanded={drawerOpen}
+        onClick={onToggleDrawer}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+
+      <div className="mobile-header__badge">
+        <span className="mobile-header__avatar" aria-hidden="true">VK</span>
+        <span className="mobile-header__name">Van Keith</span>
       </div>
-      <div className="chat-header__title">
-        <div className="chat-header__name-row">
-          {/* Mobile: dropdown to switch persona. Desktop: sidebar handles it. */}
-          <select
-            className="chat-header__select"
-            aria-label="Persona"
-            value={personaId}
-            onChange={(e) => onPersonaChange(e.target.value)}
-            disabled={personas.length === 0}
-          >
-            {personas.length === 0 ? (
-              <option value="">Loading personas...</option>
-            ) : (
-              personas.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.display_name}
-                </option>
-              ))
-            )}
-          </select>
-          <span className="chat-header__name">{displayName}</span>
+
+      {drawerOpen ? (
+        <div className="drawer">
+          <button
+            type="button"
+            className="drawer__scrim"
+            aria-label="Close quick actions"
+            onClick={onToggleDrawer}
+          />
+          <div className="drawer__panel" role="dialog" aria-label="Quick actions">
+            <div className="drawer__brand">
+              <BrandMark />
+              <span className="sidebar__brand-text">
+                <span className="sidebar__brand-name">Van Keith</span>
+                <span className="sidebar__brand-tag">Intelligence</span>
+              </span>
+            </div>
+            <div className="sidebar__actions">
+              <QuickActionGroups
+                onQuickAction={onQuickAction}
+                activeActionId={activeActionId}
+                disabled={quickActionsDisabled}
+              />
+            </div>
+          </div>
         </div>
-        <span className="chat-header__subtitle">
-          Drafting replies in their voice
-        </span>
-      </div>
-      <QuickActionPicker
-        onQuickAction={onQuickAction}
-        disabled={quickActionsDisabled}
-      />
+      ) : null}
     </header>
   );
 }

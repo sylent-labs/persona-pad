@@ -5,6 +5,38 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-08
+
+### Added
+- Rebuild the app shell to a 3-column desktop layout (272px sidebar, fill
+  center, 372px right rail) with ambient purple glows; mobile collapses to a
+  single column with a hamburger quick-actions drawer.
+- Welcome hero with AI-core orb, heading, subtitle, and a 2×2 grid of
+  suggestion cards wired to quick actions.
+- Tone card on the desktop right rail for reply-mode selection
+  (Professional, Raw, Short, Email) with per-mode hints.
+- Mode chips row below the thread on mobile for the same mode picker.
+- Guide card placeholder in the right rail (empty state until PR3).
+- BrandMark, Hero, SuggestionCards, ToneCard, ModeChips, and
+  QuickActionGroups components.
+
+### Changed
+- Hardcode the active persona to Van Keith (`PERSONA_ID`); remove the persona
+  switcher and the `listPersonas()` fetch from the UI.
+- Rebuild the sidebar to brand mark plus grouped quick actions only.
+- Rework the chat thread: persona block shows Option 1 (`draft`), Option 2
+  (`alternate`), style-notes chips, and a Delivered indicator on the last
+  user message.
+- Restyle the composer as a rounded pill with attach glyph, auto-grow
+  textarea, and gradient send button; mode selection lives in the Tone card
+  or mode chips, not the composer.
+- Mobile header is hamburger plus a centered "VK Van Keith" badge; desktop
+  has no top bar.
+
+### Removed
+- `QuickActionPicker` dropdown (quick actions live in the sidebar and mobile
+  drawer as buttons).
+
 ## [0.7.0] - 2026-06-08
 
 ### Changed

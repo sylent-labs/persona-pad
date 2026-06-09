@@ -5,39 +5,43 @@ import userEvent from "@testing-library/user-event";
 import { Sidebar } from "./Sidebar";
 import { QUICK_ACTIONS } from "../quickActions";
 
-const personas = [
-  { id: "van_keith", display_name: "Van Keith" },
-  { id: "other", display_name: "Other Persona" },
-];
-
 describe("Sidebar", () => {
-  it("calls onPersonaChange when a persona is clicked", async () => {
-    const onPersonaChange = vi.fn();
-    const user = userEvent.setup();
+  it("renders the VKI brand", () => {
     render(
       <Sidebar
-        personas={personas}
-        personaId="van_keith"
-        onPersonaChange={onPersonaChange}
         onQuickAction={vi.fn()}
+        activeActionId={null}
         quickActionsDisabled={false}
       />,
     );
-
-    await user.click(screen.getByRole("button", { name: /other persona/i }));
-
-    expect(onPersonaChange).toHaveBeenCalledWith("other");
+    expect(screen.getByText("Van Keith")).toBeInTheDocument();
+    expect(screen.getByText("Intelligence")).toBeInTheDocument();
   });
 
-  it("fires onQuickAction with the preset message when a quick action is clicked", async () => {
+  it("renders every quick action grouped into Chat and Email", () => {
+    render(
+      <Sidebar
+        onQuickAction={vi.fn()}
+        activeActionId={null}
+        quickActionsDisabled={false}
+      />,
+    );
+    expect(screen.getByText("Quick Actions — Chat")).toBeInTheDocument();
+    expect(screen.getByText("Quick Actions — Email")).toBeInTheDocument();
+    for (const action of QUICK_ACTIONS) {
+      expect(
+        screen.getByRole("button", { name: action.label }),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("fires onQuickAction with the full action when one is clicked", async () => {
     const onQuickAction = vi.fn();
     const user = userEvent.setup();
     render(
       <Sidebar
-        personas={personas}
-        personaId="van_keith"
-        onPersonaChange={vi.fn()}
         onQuickAction={onQuickAction}
+        activeActionId={null}
         quickActionsDisabled={false}
       />,
     );
@@ -45,36 +49,28 @@ describe("Sidebar", () => {
     const action = QUICK_ACTIONS[0]!;
     await user.click(screen.getByRole("button", { name: action.label }));
 
-    expect(onQuickAction).toHaveBeenCalledWith(action.message, action.mode);
+    expect(onQuickAction).toHaveBeenCalledWith(action);
   });
 
-  it("passes the email mode for the Email template quick action", async () => {
-    const onQuickAction = vi.fn();
-    const user = userEvent.setup();
+  it("marks the active action's button as current", () => {
+    const action = QUICK_ACTIONS.find((a) => a.id === "why-leaving")!;
     render(
       <Sidebar
-        personas={personas}
-        personaId="van_keith"
-        onPersonaChange={vi.fn()}
-        onQuickAction={onQuickAction}
+        onQuickAction={vi.fn()}
+        activeActionId={action.id}
         quickActionsDisabled={false}
       />,
     );
 
-    const emailAction = QUICK_ACTIONS.find((a) => a.id === "email-template");
-    expect(emailAction).toBeDefined();
-    await user.click(screen.getByRole("button", { name: emailAction!.label }));
-
-    expect(onQuickAction).toHaveBeenCalledWith(emailAction!.message, "email");
+    const button = screen.getByRole("button", { name: action.label });
+    expect(button).toHaveAttribute("aria-current", "true");
   });
 
   it("disables every quick action button when quickActionsDisabled is true", () => {
     render(
       <Sidebar
-        personas={personas}
-        personaId="van_keith"
-        onPersonaChange={vi.fn()}
         onQuickAction={vi.fn()}
+        activeActionId={null}
         quickActionsDisabled
       />,
     );

@@ -5,50 +5,33 @@ type BubbleRole = "user" | "persona";
 interface BubbleProps {
   role: BubbleRole;
   text: string;
-  /** True when this bubble is the last in its role-streak; renders the iMessage tail. */
-  tail?: boolean;
-  /** True when this bubble starts a new sender streak (controls top spacing). */
-  lead?: boolean;
   variant?: "default" | "error";
-  label?: string;
+  /** Hide the copy affordance (e.g. the user's own bubble in this design). */
+  showCopy?: boolean;
 }
 
+/** A single chat bubble. The persona block composes several of these; the OPTION
+ * labels and style chips are rendered by ChatThread, not here. */
 export function Bubble({
   role,
   text,
-  tail = false,
-  lead = false,
   variant = "default",
-  label,
+  showCopy = true,
 }: BubbleProps) {
-  const rowClass = [
-    "bubble-row",
-    `bubble-row--${role}`,
-    lead ? "bubble-row--lead" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
   const bubbleClass = [
     "bubble",
     `bubble--${role}`,
-    tail ? "bubble--tail" : "",
     variant === "error" ? "bubble--error" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const showCopy = variant !== "error";
-  const copyButton = showCopy ? <CopyButton text={text} /> : null;
+  const copy = showCopy && variant !== "error" ? <CopyButton text={text} /> : null;
 
   return (
-    <div className={rowClass}>
-      {role === "user" ? copyButton : null}
-      <div className={bubbleClass}>
-        {label ? <span>{label}</span> : null}
-        {text}
-      </div>
-      {role === "persona" ? copyButton : null}
+    <div className={`bubble-row bubble-row--${role}`}>
+      <div className={bubbleClass}>{text}</div>
+      {copy}
     </div>
   );
 }
@@ -134,11 +117,8 @@ function CheckIcon() {
 
 export function TypingBubble() {
   return (
-    <div className="bubble-row bubble-row--persona bubble-row--lead">
-      <div
-        className="bubble bubble--persona bubble--tail bubble--typing"
-        aria-label="typing"
-      >
+    <div className="bubble-row bubble-row--persona">
+      <div className="bubble bubble--persona bubble--typing" aria-label="typing">
         <span />
         <span />
         <span />
