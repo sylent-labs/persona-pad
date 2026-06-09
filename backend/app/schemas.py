@@ -22,11 +22,17 @@ class GenerateResponse(BaseModel):
     """
     Class: GenerateResponse
     Objective: Outbound payload from POST /api/generate. Mirrors the OpenAI Structured Output schema.
+    Fields:
+        draft (str): primary persona-voice reply, the main one to send
+        alternate (str): a second take that says the same thing differently
+        guide (list[str]): strategic bullets coaching the user on how Van Keith would
+                           approach replying to this specific message. Produced in the
+                           same single LLM call and dissected out client-side.
     """
 
     draft: str
     alternate: str
-    style_notes: list[str]
+    guide: list[str]
 
 
 class Example(BaseModel):

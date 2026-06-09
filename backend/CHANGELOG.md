@@ -5,6 +5,21 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-08
+
+### Changed
+
+- Replace `style_notes` with `guide` on `POST /api/generate`: four
+  message-specific strategic bullets on how Van Keith would approach replying,
+  produced in the same LLM call as the draft and alternate.
+- Prompt assembly now instructs the model to coach on what to lead with, what
+  to hold back, and when less is more, with the same do-not-invent rule as
+  drafts.
+
+### Removed
+
+- `style_notes` field from `GenerateResponse`.
+
 ## [0.6.0] - 2026-06-08
 
 ### Added
