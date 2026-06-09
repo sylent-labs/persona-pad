@@ -6,25 +6,24 @@ import { Bubble, TypingBubble } from "./Bubble";
 
 describe("Bubble", () => {
   it("renders user bubble text and applies the user role class", () => {
-    const { container } = render(
-      <Bubble role="user" text="hi there" tail label="option 1: " />,
-    );
-    expect(screen.getByText("option 1:")).toBeInTheDocument();
+    const { container } = render(<Bubble role="user" text="hi there" />);
     expect(screen.getByText("hi there")).toBeInTheDocument();
     const bubble = container.querySelector(".bubble");
     expect(bubble?.className).toContain("bubble--user");
-    expect(bubble?.className).toContain("bubble--tail");
   });
 
   it("renders persona bubble text and applies the persona role class", () => {
-    const { container } = render(
-      <Bubble role="persona" text="yeah probably" label="option 2: " />,
-    );
-    expect(screen.getByText("option 2:")).toBeInTheDocument();
+    const { container } = render(<Bubble role="persona" text="yeah probably" />);
     expect(screen.getByText("yeah probably")).toBeInTheDocument();
     const bubble = container.querySelector(".bubble");
     expect(bubble?.className).toContain("bubble--persona");
-    expect(bubble?.className).not.toContain("bubble--tail");
+  });
+
+  it("hides the copy button when showCopy is false (user bubble)", () => {
+    render(<Bubble role="user" text="my own words" showCopy={false} />);
+    expect(
+      screen.queryByRole("button", { name: /copy/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -40,10 +39,10 @@ describe("Bubble copy button", () => {
     return writeText;
   }
 
-  it("copies only the text and leaves out the label prefix", async () => {
+  it("copies the bubble text", async () => {
     const user = userEvent.setup();
     const writeText = installClipboardMock();
-    render(<Bubble role="persona" text="yeah probably" label="option 1: " />);
+    render(<Bubble role="persona" text="yeah probably" />);
 
     await user.click(screen.getByRole("button", { name: /copy message/i }));
 

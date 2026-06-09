@@ -1,69 +1,109 @@
 import { useEffect, useRef } from "react";
 
-import type { ChatMessage } from "../types";
+import type { Mode } from "../api/types";
+import { MODES } from "../api/types";
+import type { ChatMessage, PersonaMessage } from "../types";
 import { Bubble, TypingBubble } from "./Bubble";
 
 interface ChatThreadProps {
   messages: ChatMessage[];
   pending: boolean;
   error: string | null;
-  emptyHint: string;
 }
 
-export function ChatThread({
-  messages,
-  pending,
-  error,
-  emptyHint,
-}: ChatThreadProps) {
+function modeLabel(mode: Mode): string {
+  return MODES.find((m) => m.value === mode)?.label ?? mode;
+}
+
+export function ChatThread({ messages, pending, error }: ChatThreadProps) {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, pending]);
 
-  if (messages.length === 0 && !pending && !error) {
-    return (
-      <div className="chat-thread chat-thread__empty">
-        <div>{emptyHint}</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="chat-thread">
+    <div className="thread">
       {messages.map((msg, idx) => {
-        const prev = messages[idx - 1];
-        const next = messages[idx + 1];
-        const isLastBubble =
-          idx === messages.length - 1 || (next && next.role !== msg.role);
-        const isLeadBubble = !prev || prev.role !== msg.role;
-        const showDelivered =
-          msg.role === "user" &&
-          idx === messages.length - 1 &&
-          !pending &&
-          !error;
-
-        return (
-          <div key={msg.id}>
-            <Bubble
-              role={msg.role}
-              text={msg.text}
-              tail={Boolean(isLastBubble)}
-              lead={isLeadBubble}
-              label={msg.label ?? ""}
-            />
-            {showDelivered ? (
-              <div className="chat-thread__delivered">Delivered</div>
-            ) : null}
-          </div>
-        );
+        if (msg.role === "user") {
+          const isLast = idx === messages.length - 1;
+          const delivered = isLast && !pending && !error;
+          return (
+            <div key={msg.id} className="thread__turn">
+              <Bubble role="user" text={msg.text} showCopy={false} />
+              {delivered ? <div className="thread__delivered">Delivered</div> : null}
+            </div>
+          );
+        }
+        return <PersonaBlock key={msg.id} message={msg} />;
       })}
-      {pending ? <TypingBubble /> : null}
-      {error ? (
-        <Bubble role="persona" text={error} tail lead variant="error" />
+
+      {pending ? (
+        <div className="thread__turn">
+          <PersonaHeader mode={null} />
+          <TypingBubble />
+        </div>
       ) : null}
+
+      {error ? (
+        <div className="thread__turn">
+          <PersonaHeader mode={null} />
+          <Bubble role="persona" text={error} variant="error" />
+        </div>
+      ) : null}
+
       <div ref={endRef} />
+    </div>
+  );
+}
+
+interface PersonaBlockProps {
+  message: PersonaMessage;
+}
+
+function PersonaBlock({ message }: PersonaBlockProps) {
+  const hasAlternate = message.alternate.trim().length > 0;
+  return (
+    <div className="thread__turn">
+      <PersonaHeader mode={message.mode} />
+
+      <div className="option">
+        <div className="option__label">Option 1</div>
+        <Bubble role="persona" text={message.draft} />
+      </div>
+
+      {hasAlternate ? (
+        <div className="option">
+          <div className="option__label">Option 2</div>
+          <Bubble role="persona" text={message.alternate} />
+        </div>
+      ) : null}
+
+      {message.styleNotes.length > 0 ? (
+        <div className="style-notes">
+          <span className="style-notes__title">✦ style notes</span>
+          {message.styleNotes.map((note) => (
+            <span key={note} className="style-notes__chip">
+              {note}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface PersonaHeaderProps {
+  /** The mode the draft was generated with; null while typing/erroring. */
+  mode: Mode | null;
+}
+
+function PersonaHeader({ mode }: PersonaHeaderProps) {
+  return (
+    <div className="persona-header">
+      <span className="persona-header__avatar" aria-hidden="true">VK</span>
+      <span className="persona-header__name">Van Keith</span>
+      {mode ? <span className="persona-header__pill">{modeLabel(mode)}</span> : null}
     </div>
   );
 }

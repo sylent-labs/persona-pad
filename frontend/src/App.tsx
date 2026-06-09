@@ -1,50 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { generateDraft, listPersonas } from "./api/client";
-import type { Mode, Persona } from "./api/types";
+import { generateDraft } from "./api/client";
+import type { Mode } from "./api/types";
 import { ChatHeader } from "./components/ChatHeader";
 import { ChatThread } from "./components/ChatThread";
+import { GuideCard } from "./components/GuideCard";
+import { Hero } from "./components/Hero";
 import { MessageInput } from "./components/MessageInput";
+import { ModeChips } from "./components/ModeChips";
 import { Sidebar } from "./components/Sidebar";
+import { ToneCard } from "./components/ToneCard";
+import type { QuickAction } from "./quickActions";
 import type { ChatMessage } from "./types";
+
+/**
+ * Single-persona app (decision A2.6): the UI always targets Van Keith, so the
+ * persona id is a constant rather than dynamic state. `GET /api/personas` stays
+ * live server-side but is no longer called from the frontend.
+ */
+const PERSONA_ID = "van_keith";
 
 function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function App() {
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const [personaId, setPersonaId] = useState<string>("");
   const [mode, setMode] = useState<Mode>("raw");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    listPersonas()
-      .then((items) => {
-        if (cancelled) return;
-        setPersonas(items);
-        const first = items[0];
-        if (first) {
-          setPersonaId((prev) => prev || first.id);
-        }
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load personas");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   async function handleSend(text: string, modeOverride?: Mode) {
-    if (!personaId) {
-      setError("No persona selected");
-      return;
-    }
     const effectiveMode = modeOverride ?? mode;
     if (modeOverride && modeOverride !== mode) {
       setMode(modeOverride);
@@ -56,28 +44,19 @@ function App() {
 
     try {
       const response = await generateDraft({
-        persona_id: personaId,
+        persona_id: PERSONA_ID,
         question: text,
         mode: effectiveMode,
       });
-      const draftMsg: ChatMessage = {
+      const personaMsg: ChatMessage = {
         id: makeId(),
         role: "persona",
-        text: response.draft,
-        label: "option 1: ",
+        draft: response.draft,
+        alternate: response.alternate,
+        styleNotes: response.style_notes,
+        mode: effectiveMode,
       };
-      const alternateMsg: ChatMessage | null = response.alternate
-        ? {
-            id: makeId(),
-            role: "persona",
-            text: response.alternate,
-            label: "option 2: ",
-          }
-        : null;
-
-      setMessages((prev) =>
-        alternateMsg ? [...prev, draftMsg, alternateMsg] : [...prev, draftMsg],
-      );
+      setMessages((prev) => [...prev, personaMsg]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -85,53 +64,63 @@ function App() {
     }
   }
 
-  function handlePersonaChange(nextId: string) {
-    setPersonaId(nextId);
-    setMessages([]);
-    setError(null);
+  function handleQuickAction(action: QuickAction) {
+    setActiveActionId(action.id);
+    setDrawerOpen(false);
+    void handleSend(action.message, action.mode);
   }
 
-  const current = personas.find((p) => p.id === personaId);
-  const emptyHint =
-    personas.length === 0
-      ? "Loading personas..."
-      : current
-        ? `Send a message to start a conversation with ${current.display_name}.`
-        : "Send a message to start the conversation.";
+  function handleFreeSend(text: string) {
+    setActiveActionId(null);
+    void handleSend(text);
+  }
 
-  const quickActionsDisabled = pending || !personaId;
+  const isWelcome = messages.length === 0 && !pending && !error;
+  const quickActionsDisabled = pending;
 
   return (
-    <main className="app">
+    <div className="app">
+      <div className="app__glow app__glow--top" aria-hidden="true" />
+      <div className="app__glow app__glow--bottom" aria-hidden="true" />
+
       <Sidebar
-        personas={personas}
-        personaId={personaId}
-        onPersonaChange={handlePersonaChange}
-        onQuickAction={handleSend}
+        onQuickAction={handleQuickAction}
+        activeActionId={activeActionId}
         quickActionsDisabled={quickActionsDisabled}
       />
-      <section className="chat">
+
+      <section className="center">
         <ChatHeader
-          personas={personas}
-          personaId={personaId}
-          onPersonaChange={handlePersonaChange}
-          onQuickAction={handleSend}
+          drawerOpen={drawerOpen}
+          onToggleDrawer={() => setDrawerOpen((open) => !open)}
+          onQuickAction={handleQuickAction}
+          activeActionId={activeActionId}
           quickActionsDisabled={quickActionsDisabled}
         />
-        <ChatThread
-          messages={messages}
-          pending={pending}
-          error={error}
-          emptyHint={emptyHint}
-        />
-        <MessageInput
-          onSend={handleSend}
-          mode={mode}
-          onModeChange={setMode}
-          disabled={pending || !personaId}
-        />
+
+        <div className="center__scroll">
+          {isWelcome ? (
+            <Hero onQuickAction={handleQuickAction} disabled={quickActionsDisabled} />
+          ) : (
+            <ChatThread messages={messages} pending={pending} error={error} />
+          )}
+        </div>
+
+        <div className="center__composer">
+          <ModeChips mode={mode} onModeChange={setMode} />
+          <MessageInput
+            onSend={handleFreeSend}
+            disabled={pending}
+          />
+        </div>
       </section>
-    </main>
+
+      <aside className="rail" aria-label="Context">
+        <div className="rail__label">Context</div>
+        <GuideCard />
+        <ToneCard mode={mode} onModeChange={setMode} />
+      </aside>
+    </div>
   );
 }
 
