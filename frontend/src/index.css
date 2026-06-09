@@ -835,6 +835,12 @@ body {
   justify-content: flex-end;
 }
 
+/* Copy button comes after the bubble in the DOM; on the sent (user) row,
+   flip its order so it sits to the LEFT of the right-aligned bubble. */
+.bubble-row--user .bubble-copy {
+  order: -1;
+}
+
 .bubble-row--persona {
   justify-content: flex-start;
 }

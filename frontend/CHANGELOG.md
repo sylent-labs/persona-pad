@@ -5,6 +5,13 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-06-09
+
+### Changed
+
+- Show the copy button on sent (user) message bubbles; position it to the left
+  of the right-aligned bubble via flex order.
+
 ## [0.9.0] - 2026-06-08
 
 ### Added

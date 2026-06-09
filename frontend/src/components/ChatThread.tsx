@@ -30,7 +30,7 @@ export function ChatThread({ messages, pending, error }: ChatThreadProps) {
           const delivered = isLast && !pending && !error;
           return (
             <div key={msg.id} className="thread__turn">
-              <Bubble role="user" text={msg.text} showCopy={false} />
+              <Bubble role="user" text={msg.text} />
               {delivered ? <div className="thread__delivered">Delivered</div> : null}
             </div>
           );
