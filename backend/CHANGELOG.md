@@ -5,6 +5,41 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-08
+
+### Added
+
+- Axis-split persona pack layout under `app/personas/<persona_id>/`: manifest
+  (`persona.json`), always-loaded voice modules, bio prose, structured facts,
+  situational domains, per-mode channel overlays, and a separate
+  `examples.json` few-shot pool.
+- `PersonaManifest` Pydantic model for manifest validation and module path
+  discovery.
+- Golden prompt assembly tests that assert every pack axis, section header, and
+  cross-mode ban survives assembly in all four draft modes.
+- Full deterministic rendering of structured `bio/facts.json` in every system
+  prompt so atomic facts are always visible to the model.
+- Optional `domain` tag on few-shot examples for domain-aware retrieval.
+
+### Changed
+
+- `persona_engine` loads personas from `app/personas/` via manifest instead of
+  `app/data/persona/` with monolithic `profile.md`, inline `_MODE_RULES`, and a
+  Q&A-only `persona.json`.
+- Cross-mode bans are single-sourced from `voice/mechanics.md` plus
+  `_BAN_REINFORCEMENT` instead of duplicated per-mode Python rules.
+- `list_personas()` validates manifests and skips packs with missing declared
+  modules.
+- Migrated the `van_keith` pack to the axis-split structure (`voice/`, `bio/`,
+  `domains/`, `channels/`, `examples.json`).
+
+### Removed
+
+- Legacy `app/data/persona/van_keith/` files (`profile.md`, monolithic
+  `persona.json`, flat `email.md`).
+- Inline `_MODE_RULES` dict from `persona_engine.py`; mode rules now live in
+  channel markdown modules.
+
 ## [0.5.3] - 2026-06-08
 
 ### Added

@@ -1,0 +1,30 @@
+{
+  "id": "van_keith",
+  "display_name": "Van Keith",
+  "default_mode": "raw",
+  "always": [
+    "voice/identity.md",
+    "voice/mechanics.md",
+    "voice/lexicon.md"
+  ],
+  "bio": [
+    "bio/background.md",
+    "bio/projects.md"
+  ],
+  "facts": "bio/facts.json",
+  "domains": [
+    "domains/engineering.md",
+    "domains/job_search.md",
+    "domains/business.md",
+    "domains/relationships.md",
+    "domains/assistant.md",
+    "domains/ai_philosophy.md"
+  ],
+  "channels": {
+    "raw": "channels/raw.md",
+    "short": "channels/short.md",
+    "professional": "channels/professional.md",
+    "email": "channels/email.md"
+  },
+  "examples": "examples.json"
+}

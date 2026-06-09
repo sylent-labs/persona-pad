@@ -31,9 +31,45 @@ from openai import RateLimitError
 
 from app.main import app
 from app.schemas import GenerateRequest, GenerateResponse
-from app.services.persona_engine import generate_response, list_personas
+from app.services.persona_engine import (
+    _build_messages,
+    generate_response,
+    list_personas,
+)
 
 _DEFAULT_PERSONA_ID = "van_keith"
+_ALL_MODES = ("raw", "professional", "short", "email")
+
+# One needle per axis of the pack. If the migration ever drops a module from the
+# assembled system prompt, the matching needle disappears and the golden test fails.
+_AXIS_NEEDLES = {
+    "identity": "Harvey Specter",
+    "mechanics": "self aware",
+    "lexicon": "furthermore",
+    "domain_engineering": "merged as well",
+    "domain_job_search": "budget allocated",
+    "domain_business": "movement in silence",
+    "domain_relationships": "being chosen",
+    "domain_assistant": "Donna",
+    "domain_ai_philosophy": "ball of mud",
+    "bio_background": "Arizona State University",
+    "bio_projects": "74 codebases",
+    "facts_zip": "94402",
+    "facts_work_auth": "Green Card",
+}
+
+# The cross-mode bans must survive in every assembled prompt, sourced once from
+# voice/mechanics.md plus the _BAN_REINFORCEMENT constant.
+_BAN_NEEDLES = ("exclamation point", "not X, it is Y", "dash")
+
+# Section headers the assembly must always emit.
+_SECTION_HEADERS = (
+    "## Mode for this draft",
+    "## Situational voice",
+    "## Background",
+    "## Known facts",
+    "## Output",
+)
 
 
 # ============================================================================
@@ -130,6 +166,19 @@ def fixture_unknown_persona_404() -> tuple[bool, int, str]:
         tuple[bool, int, str]: (error_raised, status_code, message)
     """
     return run_unknown_persona_404()
+
+
+@pytest.fixture
+def fixture_golden_prompts() -> tuple[bool, dict[str, str], str]:
+    """
+    Method: fixture_golden_prompts
+    Objective: Fixture returning the assembled system prompt for every mode
+    Parameters:
+        None
+    Return:
+        tuple[bool, dict[str, str], str]: (success, {mode: system_prompt}, error)
+    """
+    return run_golden_prompts()
 
 
 # ============================================================================
@@ -327,6 +376,28 @@ def run_unknown_persona_404() -> tuple[bool, int, str]:
         return False, 0, f"wrong error type: {e}"
 
 
+def run_golden_prompts() -> tuple[bool, dict[str, str], str]:
+    """
+    Method: run_golden_prompts
+    Objective: Assemble the system prompt for every mode with the few-shot selector
+               stubbed out (no network), so the golden tests can assert the pack
+               survives assembly deterministically
+    Parameters:
+        None
+    Return:
+        tuple[bool, dict[str, str], str]: (success, {mode: system_prompt}, error)
+    """
+    try:
+        with patch("app.services.example_selector.select_examples", return_value=()):
+            prompts: dict[str, str] = {}
+            for mode in _ALL_MODES:
+                messages = _build_messages(_DEFAULT_PERSONA_ID, "tell me about yourself", mode)
+                prompts[mode] = messages[0]["content"]
+            return True, prompts, ""
+    except Exception as e:
+        return False, {}, str(e)
+
+
 # ============================================================================
 # TESTS
 # ============================================================================
@@ -468,6 +539,70 @@ def test_unknown_persona_id_returns_404(
     assert "persona" in message.lower(), f"expected persona-not-found message, got: {message}"
 
 
+def test_golden_all_axes_survive_assembly(
+    fixture_golden_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_golden_all_axes_survive_assembly
+    Objective: Verify every pack axis (identity, mechanics, lexicon, all domains, all
+               bio, facts) and every section header survive assembly in all four modes
+    Parameters:
+        fixture_golden_prompts (tuple): (success, {mode: system_prompt}, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_golden_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    for mode in _ALL_MODES:
+        prompt = prompts[mode]
+        for axis, needle in _AXIS_NEEDLES.items():
+            assert needle in prompt, f"[{mode}] missing {axis} axis needle: {needle!r}"
+        for header in _SECTION_HEADERS:
+            assert header in prompt, f"[{mode}] missing section header: {header!r}"
+
+
+def test_golden_bans_present_every_mode(
+    fixture_golden_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_golden_bans_present_every_mode
+    Objective: Verify the cross-mode bans (single-sourced from mechanics + reinforcement)
+               appear in every assembled prompt, so the de-duplication did not lose them
+    Parameters:
+        fixture_golden_prompts (tuple): (success, {mode: system_prompt}, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_golden_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    for mode in _ALL_MODES:
+        prompt = prompts[mode]
+        for needle in _BAN_NEEDLES:
+            assert needle in prompt, f"[{mode}] missing ban needle: {needle!r}"
+
+
+def test_golden_email_channel_only_in_email_mode(
+    fixture_golden_prompts: tuple[bool, dict[str, str], str],
+) -> None:
+    """
+    Method: test_golden_email_channel_only_in_email_mode
+    Objective: Verify the email channel overlay loads for email mode and not for raw,
+               and that the raw channel's lowercase rule loads for raw mode
+    Parameters:
+        fixture_golden_prompts (tuple): (success, {mode: system_prompt}, error)
+    Return:
+        None
+    """
+    success, prompts, error = fixture_golden_prompts
+
+    assert success, f"prompt assembly failed: {error}"
+    assert "Regards," in prompts["email"], "email channel rules missing from email mode"
+    assert "Regards," not in prompts["raw"], "email channel leaked into raw mode"
+    assert "entirely in lowercase" in prompts["raw"], "raw channel rule missing from raw mode"
+
+
 @pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY"),
     reason="Live smoke requires OPENAI_API_KEY",
@@ -541,3 +676,20 @@ if __name__ == "__main__":
     error_raised, status_code, message = run_unknown_persona_404()
     print(f"Result: {'PASSED' if error_raised and status_code == 404 else 'FAILED'}")
     print(f"Status: {status_code}, message: {message}")
+
+    print("--------- TEST GOLDEN PROMPTS ----------")
+    success, prompts, error = run_golden_prompts()
+    if success:
+        missing: list[str] = []
+        for mode in _ALL_MODES:
+            for axis, needle in _AXIS_NEEDLES.items():
+                if needle not in prompts[mode]:
+                    missing.append(f"{mode}:{axis}")
+        print(f"Result: {'PASSED' if not missing else 'FAILED'}")
+        if missing:
+            print(f"Missing needles: {missing}")
+        else:
+            print(f"All axes present in {len(_ALL_MODES)} modes")
+    else:
+        print("Result: FAILED")
+        print(f"Error: {error}")

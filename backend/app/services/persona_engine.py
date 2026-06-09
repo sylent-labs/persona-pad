@@ -7,181 +7,54 @@ import re
 import time
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from fastapi import HTTPException
 from openai import APITimeoutError, OpenAI, OpenAIError, RateLimitError
+from pydantic import ValidationError
 
-from app.schemas import Example, GenerateResponse, Mode, Persona
+from app.schemas import Example, GenerateResponse, Mode, Persona, PersonaManifest
 
 logger = logging.getLogger(__name__)
 
-_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-_PERSONA_DIR = _DATA_DIR / "persona"
-_PROFILE_FILENAME = "profile.md"
-_EMAIL_PROFILE_FILENAME = "email.md"
-_PERSONA_FILENAME = "persona.json"
+_PERSONA_DIR = Path(__file__).resolve().parent.parent / "personas"
+_MANIFEST_FILENAME = "persona.json"
 _PERSONA_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 _MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 _FEW_SHOT_MAX = 24
 
-_MODE_RULES: dict[Mode, str] = {
-    "raw": (
-        "Mode: raw.\n"
-        "Voice. Write as VK. The reference points are Harvey Specter, Ryan Reynolds, "
-        "and Robert Downey Jr talking in a room with one other person. A senior software "
-        "engineer with thirty years in. Calm, certain, slightly tired of explaining the "
-        "obvious. Never enthusiastic. Never happy. Not selling. The other person is the "
-        "one trying to convince you. Talk to them like they are sitting across from you, "
-        "and only say things you would say to their face.\n"
-        "Cadence. End every sentence on a downward inflection in the Chris Voss sense: "
-        "settled, declarative, not asking for approval. Use plain words, the kind those "
-        "three would actually use. No fancy adjectives, no big words for the sake of it. "
-        "Use an analogy only when the point will not land without one. Do not overexplain.\n"
-        "Format. Write entirely in lowercase. Periods and commas only when needed. "
-        "No profanity unless the example pool already shows it.\n"
-        "Hard bans. The output must never contain any of these:\n"
-        "1. an exclamation point.\n"
-        "2. an em dash, en dash, hyphen, or any other dash character anywhere, including "
-        "inside compound words and ranges. Write 'self aware' and 'double check' as two "
-        "words. Write 'monday to friday', not the dashed version.\n"
-        "3. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
-        "contrast structure. Do not write 'it is not about the money, it is about respect' "
-        "or 'it's not a bug, it's a feature'. Just say what it is, in one statement.\n"
-        "4. corporate filler from the profile's avoid list.\n"
-        "5. meta citations. Never cite the persona pack, profile, documents, or "
-        "source material. Never write '(As per documents)', 'as per documents', "
-        "'according to my profile', 'based on the provided context', or similar. "
-        "State facts directly as Van Keith would know them."
-    ),
-    "professional": (
-        "Mode: professional.\n"
-        "Voice. Same VK underneath: direct, senior engineer, no theater. Clean up casing "
-        "and use proper sentence punctuation. Cut filler. No profanity. Suitable for a "
-        "recruiter, client, or interview email.\n"
-        "Hard bans. The output must never contain any of these:\n"
-        "1. an em dash, en dash, hyphen, or any other dash character anywhere, including "
-        "inside compound words and ranges.\n"
-        "2. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
-        "contrast structure.\n"
-        "3. corporate filler from the profile's avoid list.\n"
-        "4. meta citations. Never cite the persona pack, profile, documents, or "
-        "source material. Never write '(As per documents)', 'as per documents', "
-        "'according to my profile', 'based on the provided context', or similar. "
-        "State facts directly as Van Keith would know them."
-    ),
-    "short": (
-        "Mode: short.\n"
-        "Voice. Same raw VK voice: lowercase, calm, declarative, downward inflection, "
-        "never enthusiastic. Five sentences or fewer. Cut ruthlessly. Suitable for DMs, "
-        "Slack, and quick replies.\n"
-        "Hard bans. The output must never contain any of these:\n"
-        "1. an exclamation point.\n"
-        "2. an em dash, en dash, hyphen, or any other dash character anywhere, including "
-        "inside compound words and ranges.\n"
-        "3. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
-        "contrast structure.\n"
-        "4. meta citations. Never cite the persona pack, profile, documents, or "
-        "source material. Never write '(As per documents)', 'as per documents', "
-        "'according to my profile', 'based on the provided context', or similar. "
-        "State facts directly as Van Keith would know them."
-    ),
-    "email": (
-        "Mode: email.\n"
-        "Voice. Same VK underneath: direct, senior engineer, no theater, quiet ego. "
-        "Van Keith writes like the role is auditioning for him, not the other way "
-        "around. He does not pitch himself with stacked adjectives, he states what he "
-        "has done in production and signs off. Email shape: greeting, body, sign off. "
-        "Proper sentence casing and punctuation. Cut filler. No profanity. The "
-        "substantive channel rules (when to greet by name, paragraphing, sign off "
-        "variants, subject handling, length targets, the no generic resume filler "
-        "list, the no redundancy rule, the brief 'what i do' overview block, the "
-        "'make it feel written for them' rules, and the preferred close) live in the "
-        "email.md block above; follow them.\n"
-        "Personalization. Each draft must read like it was written for the specific "
-        "recipient and listing in the question, not a template with the name swapped "
-        "in. When the role title, company name, or a specific phrase from the "
-        "recipient's message is available in the question, reference it explicitly "
-        "in the draft at least once. Never produce a draft that could be sent to "
-        "anyone else with only a name change. Generic stand ins like 'your team', "
-        "'your company', 'your role', or 'the role you posted' are only acceptable "
-        "when the actual name truly is not in the question.\n"
-        "What i do, brief overview. When a draft needs a short 'what i do' line, "
-        "pull one or two threads from the 'what i do, brief overview' block in "
-        "email.md that overlap with what the recipient asked about. Two short lines "
-        "max. Never paste the whole block. If the recipient never asked for a 'what "
-        "i do' line (scheduling reply, follow up, thread already in motion), do not "
-        "include one at all.\n"
-        "Recruiter authenticity (why you applied / not a bot). When the recipient "
-        "asks what you liked about the company and role, why you applied, or to "
-        "explain in your own words without sounding like AI, follow the "
-        "'recruiter authenticity questions' section in email.md. Answer that "
-        "question in the first line or two. One short body paragraph, three to six "
-        "sentences, then sign off. Connect the company problem to production "
-        "strengths (reliability, trust, systems that cannot fake good engineering). "
-        "Confident senior engineer tone. No cover letter filler, no mission "
-        "paragraphs, no fake passion, no buzzwords, no over explaining. Do not "
-        "include a 'what i do' block unless they asked for background.\n"
-        "Hard bans. The output must never contain any of these:\n"
-        "1. an em dash, en dash, hyphen, or any other dash character anywhere, "
-        "including inside compound words, ranges, and salutations. Specifically, "
-        "'end-to-end' must always be written as 'end to end' as three separate words. "
-        "Same for 'full-time', 'part-time', 'back-end', 'front-end', and any other "
-        "compound the model is tempted to hyphenate.\n"
-        "2. the rhetorical pattern 'it is not X, it is Y' or any 'not this, but that' "
-        "contrast structure.\n"
-        "3. email cliches: 'hope this finds you well', 'hope you are doing well', "
-        "'just checking in', 'just wanted to', 'kindly', 'per my previous email', "
-        "'as per', 'please find attached', 'circling back', 'touching base', "
-        "'gentle reminder', 'thanks in advance'.\n"
-        "4. generic resume filler: 'focused on delivering impactful solutions', "
-        "'delivering impactful solutions', 'delivering value', 'strong background', "
-        "'strong experience', 'extensive experience', 'deep experience', "
-        "'deep backend experience', 'proven track record', 'passionate about', "
-        "'results driven', 'leverage my [anything]', 'my capability to drive "
-        "[anything]', 'drive end to end software solutions', 'passionate about "
-        "[anything]', 'thrilled to apply', 'excited about the opportunity', "
-        "'excited to apply', 'your mission resonates', 'aligns with my passion', "
-        "'deeply committed to', 'strong believer in'. When the impulse is to "
-        "qualify experience with 'strong / extensive / deep / vast / proven', use "
-        "'production experience' instead. No other modifier is allowed.\n"
-        "5. soft closes: 'I would be open to a call', 'I am open to a call', "
-        "'happy to chat', 'happy to connect', 'on the lookout for roles', "
-        "'if any upcoming or existing roles seem aligned', 'if this looks like a "
-        "fit', 'looking forward to hearing from you'. The close always puts the next "
-        "step on the recipient. Default to 'You have my resume and contact. Let's "
-        "set up a call. ' or a variant of the same shape.\n"
-        "6. redundancy. Each fact (role, stack, availability, location, work "
-        "authorization, contact details) appears once per email. If the opening "
-        "already stated his role and stack, do not restate the role and stack in a "
-        "later paragraph in different words. Cut the duplicate paragraph entirely. "
-        "Fewer lines is always better.\n"
-        "7. salary anchors. When the recipient asks for a salary number, a range, "
-        "'expected compensation', 'current salary', 'comp expectations', 'what are "
-        "you looking for', or any equivalent, the draft must not contain any number, "
-        "range, dollar amount, or soft anchor (no '$130k', no '$130k to $160k', no "
-        "'around $150k', no 'north of $130k', no 'mid 100s'). Flip the question "
-        "back to the recipient's budget instead, e.g. 'Could you share the usual "
-        "salary range your client has budgeted for this role?'. The form fill "
-        "numbers that appear in profile.md and persona.json examples are for "
-        "filling out required form fields, not for email replies. The only "
-        "exception is when the user message explicitly tells the assistant to use "
-        "a specific number; in that case use exactly that number.\n"
-        "8. corporate filler from the profile's avoid list.\n"
-        "9. markdown formatting. Emails are plain text. URLs must be written "
-        "exactly as given, with no wrapping. Do not use markdown link syntax "
-        "like '[https://example.com](https://example.com)' or '[label](url)', "
-        "do not wrap URLs in angle brackets like '<https://example.com>', and "
-        "do not bold, italicize, code-fence, or otherwise decorate a URL. "
-        "Same for the rest of the body: no '**bold**', no '*italic*', no "
-        "'`code`', no headings, no bulleted or numbered list markup. If a "
-        "list is needed, write each item on its own line in prose.\n"
-        "10. meta citations. Never cite the persona pack, profile, documents, or "
-        "source material. Never write '(As per documents)', 'as per documents', "
-        "'according to my profile', 'based on the provided context', or similar. "
-        "State facts directly as Van Keith would know them."
-    ),
-}
+# Single source of truth for the cross-mode bans. The full, canonical ban list (with
+# every example) lives in voice/mechanics.md and is always loaded. This constant is a
+# short reinforcement appended after the channel block for every mode, so the rules
+# never have to be duplicated per channel the way the old _MODE_RULES dict did.
+_BAN_REINFORCEMENT = (
+    "Reinforcement, applies to every mode regardless of channel:\n"
+    "- No dash characters anywhere, including inside compound words and ranges. "
+    "Write 'self aware' and 'double check' as two words, 'monday to friday' not the "
+    "dashed version.\n"
+    "- No exclamation points.\n"
+    "- Never the 'it is not X, it is Y' pattern or any 'not this, but that' contrast "
+    "structure. Just state what it is, in one statement.\n"
+    "- No corporate filler from the lexicon avoid list.\n"
+    "- Never cite the persona pack, profile, documents, or source material. Never write "
+    "'(As per documents)', 'as per documents', 'according to my profile', 'based on the "
+    "provided context', or similar. State facts directly as Van Keith would know them."
+)
+
+_OUTPUT_INSTRUCTIONS = (
+    "Return JSON matching the GenerateResponse schema with three fields:\n"
+    "- draft: the primary persona-voice draft (the main one to send).\n"
+    "- alternate: a second take that says the same thing differently.\n"
+    "- style_notes: 2 to 4 short bullet strings describing what choices you made.\n"
+    "Do not invent facts. The known facts block above is authoritative; if the question "
+    "requires information that is neither in the facts nor the background, say what is "
+    "missing in the draft itself rather than guessing.\n"
+    "Never cite the persona pack, profile, documents, or source material. Never write "
+    "'(As per documents)', 'as per documents', 'according to my profile', 'based on the "
+    "provided context', or similar meta commentary. State facts directly as Van Keith "
+    "would know them."
+)
 
 
 _client: OpenAI | None = None
@@ -221,71 +94,140 @@ def _persona_path(persona_id: str) -> Path:
 
 
 @lru_cache(maxsize=32)
-def _load_style_profile(persona_id: str) -> str:
+def _load_manifest(persona_id: str) -> PersonaManifest:
     """
-    Method: _load_style_profile
-    Objective: Load <persona>/profile.md once per persona and cache it
+    Method: _load_manifest
+    Objective: Load and validate <persona>/persona.json once per persona and cache it
     Parameters:
         persona_id (str): The persona slug
     Return:
-        str: full markdown contents
+        PersonaManifest: validated manifest (metadata + module path lists)
     """
-    return (_persona_path(persona_id) / _PROFILE_FILENAME).read_text(encoding="utf-8")
+    raw = json.loads(
+        (_persona_path(persona_id) / _MANIFEST_FILENAME).read_text(encoding="utf-8")
+    )
+    return PersonaManifest.model_validate(raw)
+
+
+@lru_cache(maxsize=256)
+def _load_module(persona_id: str, rel_path: str) -> str:
+    """
+    Method: _load_module
+    Objective: Load a single markdown module from the pack and cache it
+    Parameters:
+        persona_id (str): The persona slug
+        rel_path (str): Module path relative to the persona directory
+    Return:
+        str: the module's text contents, stripped of trailing whitespace
+    """
+    return (_persona_path(persona_id) / rel_path).read_text(encoding="utf-8").rstrip()
+
+
+def _join_modules(persona_id: str, rel_paths: tuple[str, ...]) -> str:
+    """
+    Method: _join_modules
+    Objective: Concatenate several markdown modules with blank-line separators
+    Parameters:
+        persona_id (str): The persona slug
+        rel_paths (tuple[str, ...]): Ordered module paths to join
+    Return:
+        str: the modules joined in order, separated by blank lines
+    """
+    return "\n\n".join(_load_module(persona_id, path) for path in rel_paths)
+
+
+def _render_facts(facts: dict[str, Any]) -> str:
+    """
+    Method: _render_facts
+    Objective: Flatten the structured facts JSON into a compact, deterministic
+               'label: value' block so the model always sees the same atomic facts in
+               full, instead of relying on similarity retrieval to surface them
+    Parameters:
+        facts (dict[str, Any]): the parsed facts.json, a dict of grouped fields
+    Return:
+        str: a markdown-ish block grouped by section, each field on its own line
+    """
+    lines: list[str] = []
+    for group, fields in facts.items():
+        lines.append(f"### {group.replace('_', ' ').title()}")
+        if isinstance(fields, dict):
+            for key, value in fields.items():
+                label = "note" if key.startswith("_") else key.replace("_", " ")
+                lines.append(f"{label}: {value}")
+        else:
+            lines.append(str(fields))
+        lines.append("")
+    return "\n".join(lines).rstrip()
 
 
 @lru_cache(maxsize=32)
-def _load_email_profile(persona_id: str) -> str | None:
+def _load_facts_block(persona_id: str, rel_path: str) -> str:
     """
-    Method: _load_email_profile
-    Objective: Load <persona>/email.md once per persona and cache it; return None if absent
+    Method: _load_facts_block
+    Objective: Load and render the persona's structured facts file once and cache it
     Parameters:
         persona_id (str): The persona slug
+        rel_path (str): Facts JSON path relative to the persona directory
     Return:
-        str | None: full markdown contents, or None when the persona has no email.md
+        str: the rendered facts block
     """
-    path = _persona_path(persona_id) / _EMAIL_PROFILE_FILENAME
-    if not path.is_file():
-        return None
-    return path.read_text(encoding="utf-8")
+    raw = json.loads(
+        (_persona_path(persona_id) / rel_path).read_text(encoding="utf-8")
+    )
+    return _render_facts(raw)
 
 
 @lru_cache(maxsize=32)
 def _load_examples(persona_id: str) -> tuple[Example, ...]:
     """
     Method: _load_examples
-    Objective: Load <persona>/persona.json once per persona and cache it as immutable tuples
+    Objective: Load <persona>/examples.json (the voice-only few-shot pool) once per
+               persona and cache it as immutable tuples
     Parameters:
         persona_id (str): The persona slug
     Return:
         tuple[Example, ...]: parsed few-shot examples
     """
+    manifest = _load_manifest(persona_id)
     raw = json.loads(
-        (_persona_path(persona_id) / _PERSONA_FILENAME).read_text(encoding="utf-8")
+        (_persona_path(persona_id) / manifest.examples).read_text(encoding="utf-8")
     )
     return tuple(Example.model_validate(item) for item in raw)
 
 
-def _to_display_name(persona_id: str) -> str:
+def _modules_exist(persona_id: str, manifest: PersonaManifest) -> bool:
     """
-    Method: _to_display_name
-    Objective: Convert a persona_id slug like 'van_keith' to a human label like 'Van Keith'
+    Method: _modules_exist
+    Objective: Verify every module a manifest declares is actually present on disk
     Parameters:
         persona_id (str): The persona slug
+        manifest (PersonaManifest): the manifest to check
     Return:
-        str: title-cased display name
+        bool: True when all declared modules (always, bio, facts, domains, channels,
+              examples) exist as files; False otherwise
     """
-    return " ".join(part.capitalize() for part in persona_id.split("_") if part)
+    base = _PERSONA_DIR / persona_id
+    declared = [
+        *manifest.always,
+        *manifest.bio,
+        manifest.facts,
+        *manifest.domains,
+        *manifest.channels.values(),
+        manifest.examples,
+    ]
+    return all((base / rel_path).is_file() for rel_path in declared)
 
 
 def list_personas() -> list[Persona]:
     """
     Method: list_personas
-    Objective: Discover available personas by scanning data/persona/* directories
+    Objective: Discover available personas by scanning the personas/* directories,
+               skipping any whose manifest is broken or whose declared modules are
+               missing on disk
     Parameters:
         None
     Return:
-        list[Persona]: sorted by id, one entry per directory containing both
-                       profile.md and persona.json
+        list[Persona]: sorted by id, one entry per valid pack
     """
     if not _PERSONA_DIR.is_dir():
         return []
@@ -296,13 +238,17 @@ def list_personas() -> list[Persona]:
             continue
         if not _PERSONA_ID_PATTERN.match(child.name):
             continue
-        if not (child / _PROFILE_FILENAME).is_file():
+        if not (child / _MANIFEST_FILENAME).is_file():
             continue
-        if not (child / _PERSONA_FILENAME).is_file():
+        try:
+            manifest = _load_manifest(child.name)
+        except (ValidationError, json.JSONDecodeError, OSError):
+            logger.warning("skipping persona with broken manifest: %s", child.name)
             continue
-        personas.append(
-            Persona(id=child.name, display_name=_to_display_name(child.name))
-        )
+        if not _modules_exist(child.name, manifest):
+            logger.warning("skipping persona with missing modules: %s", child.name)
+            continue
+        personas.append(Persona(id=manifest.id, display_name=manifest.display_name))
     return personas
 
 
@@ -313,9 +259,9 @@ def _build_messages(
 ) -> list[dict[str, str]]:
     """
     Method: _build_messages
-    Objective: Compose the system + few-shot + user messages for the LLM
+    Objective: Compose the system + few-shot + user messages from the axis-split pack
     Parameters:
-        persona_id (str): Which persona's profile and examples to load
+        persona_id (str): Which persona's pack to load
         question (str): The user's question
         mode (Mode): raw, professional, short, or email
     Return:
@@ -325,30 +271,25 @@ def _build_messages(
     # _load_examples from this module.
     from app.services.example_selector import select_examples
 
-    profile = _load_style_profile(persona_id)
+    manifest = _load_manifest(persona_id)
+    if mode not in manifest.channels:
+        raise HTTPException(status_code=400, detail=f"unsupported mode: {mode}")
+
+    always_block = _join_modules(persona_id, tuple(manifest.always))
+    channel_block = _load_module(persona_id, manifest.channels[mode])
+    domains_block = _join_modules(persona_id, tuple(manifest.domains))
+    bio_block = _join_modules(persona_id, tuple(manifest.bio))
+    facts_block = _load_facts_block(persona_id, manifest.facts)
+
     examples = select_examples(persona_id, question, _FEW_SHOT_MAX)
 
-    email_block = ""
-    if mode == "email":
-        email_profile = _load_email_profile(persona_id)
-        if email_profile is not None:
-            email_block = f"## Email channel rules\n{email_profile}\n\n"
-
     system_content = (
-        f"{profile}\n\n"
-        f"{email_block}"
-        f"## Mode for this draft\n{_MODE_RULES[mode]}\n\n"
-        "## Output\n"
-        "Return JSON matching the GenerateResponse schema with three fields:\n"
-        "- draft: the primary persona-voice draft (the main one to send).\n"
-        "- alternate: a second take that says the same thing differently.\n"
-        "- style_notes: 2 to 4 short bullet strings describing what choices you made.\n"
-        "Do not invent facts. If the question requires information you do not have, "
-        "say what is missing in the draft itself.\n"
-        "Never cite the persona pack, profile, documents, or source material. "
-        "Never write '(As per documents)', 'as per documents', 'according to my "
-        "profile', 'based on the provided context', or similar meta commentary. "
-        "State facts directly as Van Keith would know them."
+        f"{always_block}\n\n"
+        f"## Mode for this draft\n{channel_block}\n\n{_BAN_REINFORCEMENT}\n\n"
+        f"## Situational voice\n{domains_block}\n\n"
+        f"## Background\n{bio_block}\n\n"
+        f"## Known facts\n{facts_block}\n\n"
+        f"## Output\n{_OUTPUT_INSTRUCTIONS}"
     )
 
     messages: list[dict[str, str]] = [{"role": "system", "content": system_content}]
@@ -372,7 +313,7 @@ def generate_response(
     Parameters:
         persona_id (str): Which persona to draft as
         question (str): The user's question
-        mode (Mode): raw, professional, or short
+        mode (Mode): raw, professional, short, or email
     Return:
         GenerateResponse: draft, alternate, style_notes
     """

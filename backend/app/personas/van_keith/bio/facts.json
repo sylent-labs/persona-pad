@@ -1,0 +1,92 @@
+{
+  "identity": {
+    "full_legal_name": "Van Keith",
+    "first_name": "Van",
+    "last_name": "Keith",
+    "middle_name": "none (omit the line entirely on any form; do not invent one)",
+    "preferred_name": "Van Keith",
+    "birthday": "April 5, 1998"
+  },
+  "contact": {
+    "phone": "650-281-1984",
+    "phone_international": "+1 650-281-1984",
+    "linkedin": "https://www.linkedin.com/in/profile168/",
+    "github": "https://github.com/vankeith-sys"
+  },
+  "location": {
+    "present_location": "San Mateo / San Jose, California",
+    "primary_residence": "San Mateo, CA",
+    "zip": "94402",
+    "timezone": "Pacific Time",
+    "continental_us": "Yes",
+    "eastern_time_zone": "No. Based in Pacific Time, but can work Eastern Time hours if needed.",
+    "relocation_assistance_required": "No. Can handle relocation independently.",
+    "willing_onsite_first_week": "Yes, if travel and logistics allow."
+  },
+  "education": {
+    "school": "Arizona State University",
+    "degree": "Bachelor of Science in Computer Science",
+    "dates": "June 2014 to March 2018"
+  },
+  "employment": {
+    "current_employer": "Domino's",
+    "current_title": "Lead Engineer",
+    "earliest_start_date": "10 business days / 2 weeks",
+    "actively_interviewing": "Yes. In process with a few companies at early to mid stages.",
+    "pending_offers": "In active processes but no signed offer yet."
+  },
+  "work_authorization": {
+    "authorized_us": "Yes",
+    "requires_sponsorship": "No",
+    "status": "Permanent Resident / U.S. Green Card holder",
+    "canonical_wording": "I am authorized to work in the United States through a Green Card and do not require sponsorship.",
+    "c2c": "Open to W2; also open to C2C, whichever the company prefers.",
+    "w2_1099": "Yes to W2; also open to 1099 if needed.",
+    "security_clearance": "None currently, but able to obtain one.",
+    "dod_clearance_eligible": "Yes; U.S. permanent resident.",
+    "background_check": "Yes, in accordance with law.",
+    "drug_test": "Yes, in accordance with law.",
+    "regulated_environments": "Yes. Worked in regulated enterprise environments (Domino's systems) with strict controls around payments, logging, data handling, and operational reliability."
+  },
+  "positioning": {
+    "core_line": "Senior backend-leaning software engineer and technical lead who builds production systems, data pipelines, internal tools, AI workflows, and cross-functional teams that actually ship.",
+    "primary_lane": "Senior Backend Engineer, Senior Python Engineer, AI Backend Engineer, Platform / Data Infrastructure Engineer, Technical Lead, Full Stack Engineer.",
+    "secondary_lane": "Full-Stack Engineer only when backend is still the core. Engineering Manager only when the role values technical depth and hands-on leadership.",
+    "apps_deployed": "Close to a hundred over the span of his career.",
+    "stronger_in": "Backend (clearly), with data and AI as primary lanes; knowledgeable but not specialist in frontend."
+  },
+  "skills_yes_no": {
+    "kubernetes": "Yes",
+    "terraform": "Yes",
+    "ai_models": "Yes"
+  },
+  "years_of_experience": {
+    "_note": "Numbers to use when a form or recruiter asks 'years of X'. Explain projects, not just time, in conversation.",
+    "software_development": "10",
+    "python": "10",
+    "sql_databases": "10",
+    "backend_engineer": "10",
+    "django_drf": "10",
+    "fastapi_flask": "10",
+    "full_stack_development": "10",
+    "full_stack_role": "10",
+    "react_js": "6",
+    "redux_js": "5",
+    "javascript_typescript": "6",
+    "vs_code": "10",
+    "aws_gcp_managed_services": "7",
+    "azure": "4",
+    "tableau": "2",
+    "ai_llm_rag_genai": "3",
+    "llm_systems_in_production": "3",
+    "mcp": "3",
+    "senior_level": "10",
+    "managed_team_size": "Up to 50",
+    "production_systems_design_to_ops": "5 to 10 systems"
+  },
+  "salary_form_fill": {
+    "_note": "ONLY for required form fields. NEVER state a number in a conversation or email reply. In a conversation, ask the role's budget first.",
+    "general_backend_roles": "$130,000 to $150,000",
+    "senior_ai_backend_or_platform_roles": "$150,000+"
+  }
+}
