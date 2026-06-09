@@ -11,7 +11,7 @@ import { ModeChips } from "./components/ModeChips";
 import { Sidebar } from "./components/Sidebar";
 import { ToneCard } from "./components/ToneCard";
 import type { QuickAction } from "./quickActions";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, PersonaMessage } from "./types";
 
 /**
  * Single-persona app (decision A2.6): the UI always targets Van Keith, so the
@@ -53,7 +53,7 @@ function App() {
         role: "persona",
         draft: response.draft,
         alternate: response.alternate,
-        styleNotes: response.style_notes,
+        guide: response.guide,
         mode: effectiveMode,
       };
       setMessages((prev) => [...prev, personaMsg]);
@@ -77,6 +77,14 @@ function App() {
 
   const isWelcome = messages.length === 0 && !pending && !error;
   const quickActionsDisabled = pending;
+
+  // The Guide card always reflects the most recent persona turn. On a fresh send
+  // `pending` flips the card to its skeleton; the previous guide stays mounted
+  // underneath the state so a failed send degrades quietly to the last good one.
+  const lastPersonaMessage = [...messages]
+    .reverse()
+    .find((msg): msg is PersonaMessage => msg.role === "persona");
+  const guideTips = lastPersonaMessage?.guide ?? [];
 
   return (
     <div className="app">
@@ -117,7 +125,7 @@ function App() {
 
       <aside className="rail" aria-label="Context">
         <div className="rail__label">Context</div>
-        <GuideCard />
+        <GuideCard tips={guideTips} pending={pending} />
         <ToneCard mode={mode} onModeChange={setMode} />
       </aside>
     </div>

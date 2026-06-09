@@ -5,6 +5,27 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-08
+
+### Added
+
+- Populate the right-rail Guide card with four strategic bullets from each
+  `/api/generate` response; welcome, skeleton, and updated states.
+- Vitest coverage for Guide card empty, populated, and pending states.
+
+### Changed
+
+- Wire `guide` from the generate response into app state; the card always
+  reflects the most recent persona turn and keeps the last good guide on send
+  failure.
+- Pin the desktop grid row to the viewport so the rail and thread scroll
+  independently when content is tall.
+
+### Removed
+
+- Inline style-notes chips from the chat thread; guidance lives in the Guide
+  card only.
+
 ## [0.8.0] - 2026-06-08
 
 ### Added

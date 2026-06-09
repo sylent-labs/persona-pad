@@ -14,7 +14,9 @@ export interface GenerateRequest {
 export interface GenerateResponse {
   draft: string;
   alternate: string;
-  style_notes: string[];
+  /** 4 strategic bullets on how Van Keith would approach this reply. Comes back
+   * in the same /api/generate call and is split out into the rail Guide card. */
+  guide: string[];
 }
 
 export const MODES: ReadonlyArray<{

@@ -78,17 +78,6 @@ function PersonaBlock({ message }: PersonaBlockProps) {
           <Bubble role="persona" text={message.alternate} />
         </div>
       ) : null}
-
-      {message.styleNotes.length > 0 ? (
-        <div className="style-notes">
-          <span className="style-notes__title">✦ style notes</span>
-          {message.styleNotes.map((note) => (
-            <span key={note} className="style-notes__chip">
-              {note}
-            </span>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
