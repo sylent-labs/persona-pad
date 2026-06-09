@@ -32,11 +32,14 @@ class GenerateResponse(BaseModel):
 class Example(BaseModel):
     """
     Class: Example
-    Objective: One few-shot pair loaded from a persona's persona.json
+    Objective: One few-shot pair loaded from a persona's examples.json. The optional
+               domain tag (engineering, job_search, casual, ...) is used by the example
+               selector for domain-aware retrieval; it is absent on legacy untagged pools.
     """
 
     question: str
     answer: str
+    domain: str | None = None
 
 
 class Persona(BaseModel):
@@ -47,3 +50,31 @@ class Persona(BaseModel):
 
     id: str
     display_name: str
+
+
+class PersonaManifest(BaseModel):
+    """
+    Class: PersonaManifest
+    Objective: The persona.json manifest for an axis-split pack. Holds metadata plus the
+               relative paths of every module. Contains no voice content itself.
+    Fields:
+        id (str): persona slug, matches the directory name
+        display_name (str): human label for the dropdown
+        default_mode (Mode): channel used when the caller does not specify one
+        always (list[str]): voice modules concatenated into every prompt
+        bio (list[str]): biographical prose modules
+        facts (str): relative path to the structured facts JSON
+        domains (list[str]): situational voice modules
+        channels (dict[Mode, str]): per-mode format overlay paths
+        examples (str): relative path to the few-shot pool
+    """
+
+    id: str
+    display_name: str
+    default_mode: Mode
+    always: list[str]
+    bio: list[str]
+    facts: str
+    domains: list[str]
+    channels: dict[Mode, str]
+    examples: str
