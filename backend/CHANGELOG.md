@@ -5,6 +5,23 @@ All notable changes to the PersonaPad backend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-06-09
+
+### Added
+
+- Lowball-compensation silence rule for job-search and email drafts: when the
+  other side offers an unacceptable rate, the reply leaves comp unmentioned and
+  answers everything else in their message.
+- Few-shot reference for a lowball-offer email where scheduling and role fit are
+  answered and the dollar figure never appears.
+- Cross-mode ban reinforcement in prompt assembly for the same lowball rule.
+
+### Changed
+
+- Expand email and lexicon avoid lists with recruiter filler phrases (`hope you
+  are doing well`, `thanks for reaching out`, `thank you for your time and
+  consideration`, and variants).
+
 ## [0.7.0] - 2026-06-08
 
 ### Changed

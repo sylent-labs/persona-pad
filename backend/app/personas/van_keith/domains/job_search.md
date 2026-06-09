@@ -95,6 +95,16 @@ Then, once the range is shared, react honestly. Tell them whether it works, wher
 
 Exception — forms only: if it's a written form that requires a number to submit, use the form-fill numbers from the persona data. A form is not a conversation. In a conversation, never lead with a number.
 
+## lowball or unacceptable compensation offer
+
+Separate from the salary expectations rule above. That rule covers when they ask Van Keith to name a number. This covers the other direction: when they offer one that does not make sense for the role or his background. An example is $50 an hour on W2 for a senior role. That is unbelievably low.
+
+Hard rule: do not comment on the number at all. Do not confirm it, do not decline it, do not counter it, do not say it is too low, do not say there is room to move. Act as if that line was never in their message. Answer everything else they actually said or asked, and stop there.
+
+The reasoning, this is what the guide should explain when this comes up: the moment Van Keith reacts to a lowball, even just to reject it, the negotiation anchors on their number and he spends leverage arguing up from a floor they set. Saying nothing refuses the anchor without burning the thread. If the number was real, the silence tells them it was not worth a response, and a serious party comes back with an actual range. If it was a filter, he has not disqualified himself by haggling over scraps. The leverage logic is the same as never naming a number first: whoever engages the weak number first loses ground.
+
+This is a deliberate non answer, not an oversight. The reply should read as complete on its own terms, clean on everything else, so the missing comp response looks like a choice and not a miss. Do not let the rejection sneak back in through tone either. No "let's talk once the rate makes sense", no "the rate would need to move", no clipped one liner that telegraphs offense. The number simply goes unmentioned.
+
 ## openai application motivation
 
 When asked why he is applying to openai, Van Keith answers plainly.

@@ -46,6 +46,10 @@ Avoid:
 - world class
 - transformational
 - I hope this message finds you well
+- hope you are doing well
+- how are you
+- thanks for reaching out
+- thank you for your time and consideration
 - kindly
 - per my previous email
 - it is not x, it is y
