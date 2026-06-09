@@ -2,7 +2,8 @@
 Tests for persona_engine and POST /api/generate.
 
 Test coverage:
-- Mocked LLM happy path returns the GenerateResponse schema
+- Mocked LLM happy path returns the GenerateResponse schema (incl. 4 guide bullets)
+- The guide field instruction + no-fabrication framing survive prompt assembly
 - Empty question is rejected at the Pydantic boundary
 - POST /api/generate end-to-end with a mocked LLM
 - RateLimitError maps to HTTP 429
@@ -198,7 +199,12 @@ def _fake_completion(draft: str = "mocked draft") -> MagicMock:
     parsed = GenerateResponse(
         draft=draft,
         alternate="mocked alternate",
-        style_notes=["direct tone", "no overclaiming"],
+        guide=[
+            "lead with availability",
+            "do not overcommit on dates",
+            "keep it one line",
+            "ask what they need before saying yes",
+        ],
     )
     completion = MagicMock()
     completion.choices = [MagicMock()]
@@ -420,7 +426,7 @@ def test_generate_with_mock_returns_schema(
     assert response is not None, "response should not be None"
     assert response.draft == "mocked draft", f"unexpected draft: {response.draft!r}"
     assert response.alternate == "mocked alternate", f"unexpected alt: {response.alternate!r}"
-    assert response.style_notes, "style_notes should be non-empty"
+    assert len(response.guide) == 4, f"expected 4 guide bullets, got {len(response.guide)}"
 
 
 def test_invalid_request_rejected(
@@ -459,7 +465,8 @@ def test_generate_endpoint_returns_200_and_schema(
     assert status_code == 200, f"expected 200, got {status_code}: {body}"
     assert body.get("draft") == "endpoint draft", f"unexpected draft: {body!r}"
     assert "alternate" in body, "alternate missing from body"
-    assert isinstance(body.get("style_notes"), list), "style_notes should be a list"
+    assert isinstance(body.get("guide"), list), "guide should be a list"
+    assert len(body["guide"]) == 4, f"expected 4 guide bullets, got {body.get('guide')!r}"
 
 
 def test_rate_limit_maps_to_429(
@@ -560,6 +567,12 @@ def test_golden_all_axes_survive_assembly(
             assert needle in prompt, f"[{mode}] missing {axis} axis needle: {needle!r}"
         for header in _SECTION_HEADERS:
             assert header in prompt, f"[{mode}] missing section header: {header!r}"
+        # The guide field is produced in the same call; its instruction and its
+        # do-not-invent framing must survive into every assembled prompt.
+        assert "guide:" in prompt, f"[{mode}] guide field instruction missing"
+        assert "never fabricate facts" in prompt, (
+            f"[{mode}] guide no-fabrication framing missing"
+        )
 
 
 def test_golden_bans_present_every_mode(
@@ -624,7 +637,8 @@ def test_live_smoke() -> None:
 
     assert response.draft, "live LLM returned empty draft"
     assert response.alternate, "live LLM returned empty alternate"
-    assert isinstance(response.style_notes, list), "style_notes should be a list"
+    assert isinstance(response.guide, list), "guide should be a list"
+    assert response.guide, "live LLM returned empty guide"
 
 
 # ============================================================================

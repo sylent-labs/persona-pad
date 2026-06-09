@@ -46,7 +46,15 @@ _OUTPUT_INSTRUCTIONS = (
     "Return JSON matching the GenerateResponse schema with three fields:\n"
     "- draft: the primary persona-voice draft (the main one to send).\n"
     "- alternate: a second take that says the same thing differently.\n"
-    "- style_notes: 2 to 4 short bullet strings describing what choices you made.\n"
+    "- guide: exactly 4 short strategic bullets coaching the user on HOW Van Keith "
+    "would approach replying to this specific message. Cover what to lead with, what "
+    "to hold back, whether less is more, and sometimes whether to reply at all. These "
+    "are tactics for the person sending the reply, not a restatement of the draft. "
+    "Flavor: 'they asked about price, do not quote a number, ask their budget first', "
+    "'less is more here, a one liner lands better than a paragraph'. Every bullet must "
+    "be specific to this message, never generic advice. The guide obeys the same "
+    "do-not-invent rule: coach only from known information, never fabricate facts, "
+    "prices, names, or relationships.\n"
     "Do not invent facts. The known facts block above is authoritative; if the question "
     "requires information that is neither in the facts nor the background, say what is "
     "missing in the draft itself rather than guessing.\n"
@@ -315,7 +323,7 @@ def generate_response(
         question (str): The user's question
         mode (Mode): raw, professional, short, or email
     Return:
-        GenerateResponse: draft, alternate, style_notes
+        GenerateResponse: draft, alternate, guide
     """
     messages = _build_messages(persona_id, question, mode)
     started = time.perf_counter()
@@ -350,6 +358,7 @@ def generate_response(
             "elapsed_ms": elapsed_ms,
             "question_chars": len(question),
             "draft_chars": len(parsed.draft),
+            "guide_count": len(parsed.guide),
         },
     )
     return parsed

@@ -1,9 +1,21 @@
+interface GuideCardProps {
+  /** The guide bullets from the most recent persona turn. Empty before any send. */
+  tips: string[];
+  /** A draft is in flight; the guide is part of that same call, so show a skeleton. */
+  pending: boolean;
+}
+
+const SKELETON_ROWS = 4;
+
 /**
- * Right-rail Guide card. PR2 ships only the placeholder/empty state — the
- * `/api/guide` call and populated bullets land in PR3. The slot is here so the
- * rail layout is final.
+ * Right-rail Guide card. The guide arrives in the same `/api/generate` call as the
+ * draft (one LLM call, dissected client-side), so this card has no fetch of its own —
+ * it renders whatever the latest persona turn carried. Three states: welcome (no
+ * send yet), loading (a draft is in flight), and populated (4 strategy bullets).
  */
-export function GuideCard() {
+export function GuideCard({ tips, pending }: GuideCardProps) {
+  const hasTips = tips.length > 0;
+
   return (
     <div className="guide-card">
       <div className="guide-card__head">
@@ -17,10 +29,39 @@ export function GuideCard() {
           <div className="card__subtitle">Updates with each message</div>
         </div>
       </div>
-      <p className="guide-card__body">
-        Send a message and I&apos;ll lay out how Van Keith would reply — and how
-        to play it.
-      </p>
+
+      {pending ? (
+        <GuideSkeleton />
+      ) : hasTips ? (
+        <>
+          <ul className="guide-card__tips">
+            {tips.map((tip) => (
+              <li key={tip} className="guide-card__tip">
+                {tip}
+              </li>
+            ))}
+          </ul>
+          <div className="guide-card__status">
+            <span className="guide-card__dot" aria-hidden="true" />
+            Updated for your last message
+          </div>
+        </>
+      ) : (
+        <p className="guide-card__body">
+          Send a message and I&apos;ll lay out how Van Keith would reply — and how
+          to play it.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function GuideSkeleton() {
+  return (
+    <div className="guide-card__skeleton" aria-hidden="true">
+      {Array.from({ length: SKELETON_ROWS }, (_, i) => (
+        <span key={i} className="guide-card__skeleton-row" />
+      ))}
     </div>
   );
 }

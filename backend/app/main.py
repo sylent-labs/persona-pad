@@ -36,7 +36,7 @@ def _parse_allowed_origins() -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-app = FastAPI(title="PersonaPad", version="0.6.0")
+app = FastAPI(title="PersonaPad", version="0.7.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -105,6 +105,6 @@ def generate(req: GenerateRequest) -> GenerateResponse:
     Parameters:
         req (GenerateRequest): persona_id, question, and mode
     Return:
-        GenerateResponse: draft, alternate, style_notes
+        GenerateResponse: draft, alternate, guide
     """
     return generate_response(req.persona_id, req.question, req.mode)
