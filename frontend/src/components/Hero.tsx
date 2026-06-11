@@ -6,17 +6,12 @@ interface HeroProps {
   disabled: boolean;
 }
 
-/** Welcome / empty state: AI-core orb, heading, subtitle, suggestion cards. */
+/** Welcome / empty state: AI-core orb, heading, suggestion cards. */
 export function Hero({ onQuickAction, disabled }: HeroProps) {
   return (
     <div className="hero">
       <AiCoreOrb />
       <h1 className="hero__heading">What can I help you?</h1>
-      <p className="hero__subtitle">
-        I run on everything Van Keith knows.
-        <br />
-        Ask me anything.
-      </p>
       <SuggestionCards onQuickAction={onQuickAction} disabled={disabled} />
     </div>
   );

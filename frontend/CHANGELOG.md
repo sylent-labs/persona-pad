@@ -5,6 +5,17 @@ All notable changes to the PersonaPad frontend will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-06-10
+
+### Changed
+
+- Remove the hero subtitle and composer placeholder for a quieter empty state.
+
+### Fixed
+
+- Grow the center column on wide foldables so the chat shell fills the viewport
+  instead of collapsing to the left half with empty black space.
+
 ## [0.9.1] - 2026-06-09
 
 ### Changed

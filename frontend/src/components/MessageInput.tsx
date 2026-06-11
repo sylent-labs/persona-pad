@@ -54,7 +54,6 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
         ref={textareaRef}
         className="composer__field"
         aria-label="Message"
-        placeholder="Ask Van Keith anything..."
         rows={1}
         value={text}
         onChange={(e) => setText(e.target.value)}

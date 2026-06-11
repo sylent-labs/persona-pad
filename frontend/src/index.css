@@ -267,6 +267,12 @@ body {
   min-width: 0;
   min-height: 0;
   height: 100%;
+  /* On mobile `.app` is a flex row with sidebar + rail hidden, so `.center` is
+     the lone child. Without flex-grow it shrinks to content width — fine on a
+     narrow phone, but on a wide foldable (Z Fold unfolded ~884px) it collapses
+     to the left half and leaves the rest black. Grow to fill the row. The grid
+     layout above 1024px ignores `flex` on grid items, so this is mobile-only. */
+  flex: 1;
 }
 
 .center__scroll {
@@ -465,7 +471,7 @@ body {
 }
 
 .hero__heading {
-  margin: 8px 0 0;
+  margin: 8px 0 22px;
   font-size: 34px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -476,21 +482,9 @@ body {
   color: transparent;
 }
 
-.hero__subtitle {
-  margin: 4px 0 22px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
 @media (min-width: 1024px) {
   .hero__heading {
     font-size: 54px;
-  }
-
-  .hero__subtitle {
-    font-size: 15px;
-    margin-bottom: 32px;
   }
 }
 
