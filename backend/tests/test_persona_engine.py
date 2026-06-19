@@ -7,6 +7,7 @@ Test coverage:
 - Empty question is rejected at the Pydantic boundary
 - POST /api/generate end-to-end with a mocked LLM
 - RateLimitError maps to HTTP 429
+- A primary rate limit retries on OPENAI_FALLBACK_MODEL and succeeds
 - list_personas discovers the on-disk persona directories
 - GET /api/personas returns the discovered personas
 - Unknown persona_id maps to HTTP 404
@@ -128,6 +129,19 @@ def fixture_rate_limit_maps_to_429() -> tuple[bool, int, str]:
         tuple[bool, int, str]: (error_raised, status_code, message)
     """
     return run_rate_limit_maps_to_429()
+
+
+@pytest.fixture
+def fixture_fallback_on_rate_limit() -> tuple[bool, GenerateResponse | None, str]:
+    """
+    Method: fixture_fallback_on_rate_limit
+    Objective: Fixture for the primary-rate-limited-then-fallback-succeeds path
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    return run_fallback_on_rate_limit()
 
 
 @pytest.fixture
@@ -327,6 +341,50 @@ def run_rate_limit_maps_to_429() -> tuple[bool, int, str]:
         return False, 0, f"wrong error type: {e}"
 
 
+def run_fallback_on_rate_limit() -> tuple[bool, GenerateResponse | None, str]:
+    """
+    Method: run_fallback_on_rate_limit
+    Objective: Make the primary model raise RateLimitError and assert the engine
+               retries on the configured fallback model and returns its draft
+    Parameters:
+        None
+    Return:
+        tuple[bool, GenerateResponse | None, str]: (success, response, error)
+    """
+    rate_limit_response = httpx.Response(
+        status_code=429,
+        request=httpx.Request("POST", "https://api.openai.com/v1/chat/completions"),
+    )
+    rate_limited = RateLimitError(
+        message="rate limited",
+        response=rate_limit_response,
+        body=None,
+    )
+
+    try:
+        with patch("app.services.persona_engine._get_client") as mock_get_client, patch(
+            "app.services.persona_engine._FALLBACK_MODEL", "gpt-5.4-mini"
+        ):
+            client = MagicMock()
+            # First call (primary) rate limits, second call (fallback) succeeds.
+            client.chat.completions.parse.side_effect = [
+                rate_limited,
+                _fake_completion(draft="fallback draft"),
+            ]
+            mock_get_client.return_value = client
+
+            response = generate_response(_DEFAULT_PERSONA_ID, "hi", "short")
+            models_called = [
+                call.kwargs["model"]
+                for call in client.chat.completions.parse.call_args_list
+            ]
+            if models_called[-1] != "gpt-5.4-mini":
+                return False, None, f"fallback model not used: {models_called}"
+            return True, response, ""
+    except Exception as e:
+        return False, None, str(e)
+
+
 def run_list_personas() -> tuple[bool, list[dict[str, str]], str]:
     """
     Method: run_list_personas
@@ -485,6 +543,24 @@ def test_rate_limit_maps_to_429(
     assert error_raised, f"expected HTTPException, got nothing. message={message}"
     assert status_code == 429, f"expected 429, got {status_code}"
     assert "rate" in message.lower(), f"expected rate-limit message, got: {message}"
+
+
+def test_fallback_used_on_primary_rate_limit(
+    fixture_fallback_on_rate_limit: tuple[bool, GenerateResponse | None, str],
+) -> None:
+    """
+    Method: test_fallback_used_on_primary_rate_limit
+    Objective: Verify a primary rate limit transparently retries on the fallback model
+    Parameters:
+        fixture_fallback_on_rate_limit (tuple): (success, response, error)
+    Return:
+        None
+    """
+    success, response, error = fixture_fallback_on_rate_limit
+
+    assert success, f"fallback path failed: {error}"
+    assert response is not None, "response should not be None"
+    assert response.draft == "fallback draft", f"expected fallback draft, got: {response!r}"
 
 
 def test_list_personas_includes_van_keith(
@@ -671,6 +747,14 @@ if __name__ == "__main__":
     error_raised, status_code, message = run_rate_limit_maps_to_429()
     print(f"Result: {'PASSED' if error_raised and status_code == 429 else 'FAILED'}")
     print(f"Status: {status_code}, message: {message}")
+
+    print("--------- TEST FALLBACK ON RATE LIMIT ----------")
+    success, response, error = run_fallback_on_rate_limit()
+    print(f"Result: {'PASSED' if success else 'FAILED'}")
+    if response:
+        print(f"Draft: {response.draft!r}")
+    if error:
+        print(f"Error: {error}")
 
     print("--------- TEST LIST PERSONAS ----------")
     success, items, error = run_list_personas()

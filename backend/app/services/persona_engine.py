@@ -22,6 +22,9 @@ _MANIFEST_FILENAME = "persona.json"
 _PERSONA_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 _MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
+# Cheaper/secondary model to fall back to when the primary model is rate limited.
+# Unset means no fallback: a 429 on the primary surfaces as a 429 to the caller.
+_FALLBACK_MODEL = os.environ.get("OPENAI_FALLBACK_MODEL")
 _FEW_SHOT_MAX = 24
 
 # Single source of truth for the cross-mode bans. The full, canonical ban list (with
@@ -317,6 +320,29 @@ def _build_messages(
     return messages
 
 
+def _parse_with_model(model: str, messages: list[dict[str, str]]) -> GenerateResponse:
+    """
+    Method: _parse_with_model
+    Objective: Run one Structured Outputs call against a specific model and return the
+               parsed response, mapping a missing parse to a 502
+    Parameters:
+        model (str): The OpenAI model id to call
+        messages (list[dict[str, str]]): The composed chat messages
+    Return:
+        GenerateResponse: draft, alternate, guide
+    """
+    completion = _get_client().chat.completions.parse(
+        model=model,
+        messages=messages,
+        response_format=GenerateResponse,
+    )
+    parsed = completion.choices[0].message.parsed
+    if parsed is None:
+        logger.error("openai returned no parsed content", extra={"model": model})
+        raise HTTPException(status_code=502, detail="LLM returned malformed response")
+    return parsed
+
+
 def generate_response(
     persona_id: str,
     question: str,
@@ -324,7 +350,8 @@ def generate_response(
 ) -> GenerateResponse:
     """
     Method: generate_response
-    Objective: Draft a persona-voice reply via the OpenAI Structured Outputs API
+    Objective: Draft a persona-voice reply via the OpenAI Structured Outputs API,
+               falling back to OPENAI_FALLBACK_MODEL when the primary model is rate limited
     Parameters:
         persona_id (str): Which persona to draft as
         question (str): The user's question
@@ -335,12 +362,19 @@ def generate_response(
     messages = _build_messages(persona_id, question, mode)
     started = time.perf_counter()
 
+    model = _MODEL
     try:
-        completion = _get_client().chat.completions.parse(
-            model=_MODEL,
-            messages=messages,
-            response_format=GenerateResponse,
-        )
+        try:
+            parsed = _parse_with_model(_MODEL, messages)
+        except RateLimitError:
+            if not _FALLBACK_MODEL or _FALLBACK_MODEL == _MODEL:
+                raise
+            logger.warning(
+                "primary model rate limited, retrying on fallback",
+                extra={"primary": _MODEL, "fallback": _FALLBACK_MODEL},
+            )
+            model = _FALLBACK_MODEL
+            parsed = _parse_with_model(_FALLBACK_MODEL, messages)
     except RateLimitError:
         logger.warning("openai rate limited")
         raise HTTPException(status_code=429, detail="LLM rate limited, try again")
@@ -351,17 +385,13 @@ def generate_response(
         logger.exception("openai error")
         raise HTTPException(status_code=502, detail="LLM provider error")
 
-    parsed = completion.choices[0].message.parsed
-    if parsed is None:
-        logger.error("openai returned no parsed content")
-        raise HTTPException(status_code=502, detail="LLM returned malformed response")
-
     elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
     logger.info(
         "draft generated",
         extra={
             "persona_id": persona_id,
             "mode": mode,
+            "model": model,
             "elapsed_ms": elapsed_ms,
             "question_chars": len(question),
             "draft_chars": len(parsed.draft),
